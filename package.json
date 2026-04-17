@@ -1,0 +1,35 @@
+{
+  "name": "coffee-shop",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.103.3",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.32",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@vitejs/plugin-vue": "^6.0.6",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.10",
+    "sass": "^1.99.0",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.8",
+    "vue-tsc": "^3.2.6"
+  }
+}
