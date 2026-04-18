@@ -71,6 +71,7 @@ export const useInvoicesStore = defineStore('invoices', () => {
   const currentInvoice = ref<Invoice | null>(null)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+  const lastShiftEnd = ref<string | null>(null)
 
   // Getters
   const pendingInvoices = computed(() =>
@@ -90,6 +91,9 @@ export const useInvoicesStore = defineStore('invoices', () => {
   const loadInvoices = async (filters?: { staffId?: string; startDate?: string; endDate?: string }) => {
     isLoading.value = true
     error.value = null
+
+    // Load last shift end time from localStorage
+    loadLastShiftEnd()
 
     try {
       if (DEMO_MODE) {
@@ -273,6 +277,21 @@ export const useInvoicesStore = defineStore('invoices', () => {
     }
   }
 
+  const resetInvoices = () => {
+    invoices.value = []
+    currentInvoice.value = null
+    error.value = null
+    lastShiftEnd.value = new Date().toISOString() // Lưu thời điểm kết ca
+    localStorage.setItem('lastShiftEnd', lastShiftEnd.value) // Persist
+  }
+
+  const loadLastShiftEnd = () => {
+    const saved = localStorage.getItem('lastShiftEnd')
+    if (saved) {
+      lastShiftEnd.value = saved
+    }
+  }
+
   return {
     invoices,
     currentInvoice,
@@ -285,6 +304,8 @@ export const useInvoicesStore = defineStore('invoices', () => {
     createInvoice,
     updateInvoice,
     payInvoice,
-    getRevenueSummary
+    getRevenueSummary,
+    resetInvoices,
+    lastShiftEnd
   }
 })

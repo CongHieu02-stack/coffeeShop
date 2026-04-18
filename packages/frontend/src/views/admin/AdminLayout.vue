@@ -114,12 +114,22 @@ const OrderIcon = () => h('svg', { class: 'w-5 h-5', fill: 'none', viewBox: '0 0
   h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z' })
 ])
 
+const ShiftReportIcon = () => h('svg', { class: 'w-5 h-5', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, [
+  h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' })
+])
+
+const VoucherIcon = () => h('svg', { class: 'w-5 h-5', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, [
+  h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z' })
+])
+
 const menuItems = [
   { name: 'Tổng quan', path: '/admin', icon: DashboardIcon },
   { name: 'Quản lý sản phẩm', path: '/admin/products', icon: ProductsIcon },
   { name: 'Quản lý nhân viên', path: '/admin/staff', icon: StaffIcon },
   { name: 'Quản lý hóa đơn', path: '/admin/invoices', icon: InvoiceIcon },
   { name: 'Xem doanh thu', path: '/admin/revenue', icon: RevenueIcon },
+  { name: 'Phiếu kết ca', path: '/admin/shift-reports', icon: ShiftReportIcon },
+  { name: 'Quản lý voucher', path: '/admin/vouchers', icon: VoucherIcon },
   { name: 'Order nước', path: '/admin/order', icon: OrderIcon }
 ]
 

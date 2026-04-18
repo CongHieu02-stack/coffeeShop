@@ -112,6 +112,10 @@ export const useTablesStore = defineStore('tables', () => {
     }
   }
 
+  const resetTables = () => {
+    tables.value = tables.value.map(t => ({ ...t, is_occupied: false }))
+  }
+
   return {
     tables,
     isLoading,
@@ -119,6 +123,7 @@ export const useTablesStore = defineStore('tables', () => {
     availableTables,
     occupiedTables,
     loadTables,
-    updateTableStatus
+    updateTableStatus,
+    resetTables
   }
 })

@@ -96,6 +96,25 @@
       <div v-else class="text-center text-gray-500 py-8">
         Chưa có hóa đơn nào trong ngày
       </div>
+
+      <!-- Signature Section -->
+      <div class="mt-8 pt-6 border-t-2 border-gray-300">
+        <p class="text-center font-medium text-gray-800 mb-6">
+          Da ket ca va ban giao doanh thu
+        </p>
+        <div class="flex justify-around">
+          <div class="text-center">
+            <p class="font-medium text-gray-700 mb-2">Nhan vien ky ten</p>
+            <div class="border-b-2 border-gray-400 w-48 mt-8"></div>
+            <p class="text-sm text-gray-500 mt-1">{{ authStore.userName }}</p>
+          </div>
+          <div class="text-center">
+            <p class="font-medium text-gray-700 mb-2">Quan ly ky ten</p>
+            <div class="border-b-2 border-gray-400 w-48 mt-8"></div>
+            <p class="text-sm text-gray-500 mt-1">&nbsp;</p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Actions -->
@@ -120,7 +139,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useInvoicesStore } from '@/stores/invoices'
+import { useTablesStore } from '@/stores/tables'
 import { useRouter } from 'vue-router'
+import { supabase } from '@/lib/supabaseClient'
 import ModalDialog from '@/components/common/ModalDialog.vue'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -136,12 +157,42 @@ const emit = defineEmits<{
 
 const authStore = useAuthStore()
 const invoicesStore = useInvoicesStore()
+const tablesStore = useTablesStore()
 const router = useRouter()
 const isExporting = ref(false)
 
 const logoutAfterExport = async () => {
   await authStore.signOut()
   router.push('/login')
+}
+
+const saveShiftReport = async () => {
+  try {
+    const reportData = {
+      staff_id: authStore.user?.id,
+      shift_date: today.value,
+      total_revenue: revenueSummary.value.total,
+      cash_revenue: revenueSummary.value.cash,
+      transfer_revenue: revenueSummary.value.transfer,
+      invoice_count: revenueSummary.value.count,
+      invoice_ids: todayPaidInvoices.value.map(i => i.id),
+      pdf_file_name: `ket-ca-${authStore.userName}-${today.value}.pdf`
+    }
+
+    const { data, error } = await supabase
+      .from('shift_reports')
+      .insert(reportData)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error saving shift report:', error)
+    } else {
+      console.log('Shift report saved:', data)
+    }
+  } catch (err) {
+    console.error('Error saving shift report:', err)
+  }
 }
 
 const currentDate = computed(() => {
@@ -162,11 +213,18 @@ const currentTime = computed(() => {
 const today = computed(() => new Date().toISOString().split('T')[0])
 
 const todayPaidInvoices = computed(() => {
+  // Get last shift end time
+  const lastShift = invoicesStore.lastShiftEnd || localStorage.getItem('lastShiftEnd')
+  const lastShiftTime = lastShift ? new Date(lastShift).getTime() : 0
+  
   return invoicesStore.invoices.filter(i => {
     const isToday = i.created_at?.startsWith(today.value)
     const isPaid = i.status === 'paid'
     const isMyInvoice = i.staff_id === authStore.user?.id
-    return isToday && isPaid && isMyInvoice
+    // Only show invoices after last shift end (or all if no last shift)
+    const paidTime = i.paid_at ? new Date(i.paid_at).getTime() : 0
+    const isAfterShift = lastShift ? paidTime > lastShiftTime : true
+    return isToday && isPaid && isMyInvoice && isAfterShift
   }).sort((a, b) => new Date(b.paid_at!).getTime() - new Date(a.paid_at!).getTime())
 })
 
@@ -227,7 +285,6 @@ const exportToPDF = async () => {
     // Create PDF
     const doc = new jsPDF('p', 'mm', 'a4')
     const pageWidth = doc.internal.pageSize.getWidth()
-    const pageHeight = doc.internal.pageSize.getHeight()
 
     const imgWidth = pageWidth - 20 // 10mm margin each side
     const imgHeight = (canvas.height * imgWidth) / canvas.width
@@ -235,27 +292,24 @@ const exportToPDF = async () => {
     // Add image to PDF
     doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight)
 
-    // Add signature section at bottom if there's space, or new page
-    const finalY = 10 + imgHeight + 10
-    if (finalY + 40 < pageHeight) {
-      doc.setFontSize(10)
-      doc.text('Đã kết ca và bàn giao doanh thu', 20, finalY)
-      doc.text(`Nhân viên ký tên: _________________`, 20, finalY + 15)
-      doc.text(`Quản lý ký tên: _________________`, 20, finalY + 25)
-    } else {
-      // Add new page for signatures
-      doc.addPage()
-      doc.setFontSize(10)
-      doc.text('Đã kết ca và bàn giao doanh thu', 20, 20)
-      doc.text(`Nhân viên ký tên: _________________`, 20, 35)
-      doc.text(`Quản lý ký tên: _________________`, 20, 45)
-    }
+    // Phan ky ten se duoc them vao HTML template de render qua html2canvas
+    // Khong su dung doc.text() vi khong ho tro Unicode tieng Viet
 
     // Save
     const fileName = `ket-ca-${authStore.userName}-${today.value}.pdf`
     doc.save(fileName)
 
     alert('Đã xuất hóa đơn PDF thành công!\nHệ thống sẽ tự động đăng xuất.')
+
+    // Save shift report to database for admin
+    await saveShiftReport()
+
+    // Reset invoices data and tables
+    console.log('Calling resetInvoices...')
+    invoicesStore.resetInvoices()
+    console.log('Last shift end after reset:', invoicesStore.lastShiftEnd)
+    console.log('LocalStorage lastShiftEnd:', localStorage.getItem('lastShiftEnd'))
+    tablesStore.resetTables()
 
     // Auto logout after export
     setTimeout(() => {

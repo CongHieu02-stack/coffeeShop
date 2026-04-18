@@ -54,6 +54,16 @@
             <p class="text-xs text-gray-500 truncate">Nhân viên</p>
           </div>
           <button 
+            @click="openChangePasswordModal"
+            class="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+            title="Đổi mật khẩu"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+          </button>
+          <button 
             @click="handleLogout"
             class="p-2 text-gray-400 hover:text-red-500 transition-colors"
             title="Đăng xuất"
@@ -79,6 +89,12 @@
       :is-open="isEndShiftModalOpen"
       @close="isEndShiftModalOpen = false"
     />
+
+    <!-- Change Password Modal -->
+    <ChangePasswordModal
+      :is-open="isChangePasswordModalOpen"
+      @close="isChangePasswordModalOpen = false"
+    />
   </div>
 </template>
 
@@ -87,13 +103,19 @@ import { h, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import EndShiftModal from '@/components/modals/EndShiftModal.vue'
+import ChangePasswordModal from '@/components/modals/ChangePasswordModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const isEndShiftModalOpen = ref(false)
+const isChangePasswordModalOpen = ref(false)
 
 const openEndShiftModal = () => {
   isEndShiftModalOpen.value = true
+}
+
+const openChangePasswordModal = () => {
+  isChangePasswordModalOpen.value = true
 }
 
 // Icons

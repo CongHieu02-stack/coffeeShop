@@ -46,6 +46,16 @@ const router = createRouter({
           component: () => import('@/views/admin/RevenueView.vue')
         },
         {
+          path: 'shift-reports',
+          name: 'AdminShiftReports',
+          component: () => import('@/views/admin/ShiftReportsView.vue')
+        },
+        {
+          path: 'vouchers',
+          name: 'AdminVouchers',
+          component: () => import('@/views/admin/VouchersView.vue')
+        },
+        {
           path: 'order',
           name: 'AdminOrder',
           component: () => import('@/views/admin/OrderView.vue')

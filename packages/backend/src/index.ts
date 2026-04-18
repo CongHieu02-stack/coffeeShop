@@ -9,6 +9,7 @@ import { invoicesRouter } from './routes/invoices'
 import { staffRouter } from './routes/staff'
 import { tablesRouter } from './routes/tables'
 import { authRouter } from './routes/auth'
+import shiftReportsRouter from './routes/shiftReports'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -24,6 +25,7 @@ app.use('/api/products', productsRouter)
 app.use('/api/invoices', invoicesRouter)
 app.use('/api/staff', staffRouter)
 app.use('/api/tables', tablesRouter)
+app.use('/api/shift-reports', shiftReportsRouter)
 
 // Health check
 app.get('/api/health', (_req, res) => {

@@ -220,12 +220,51 @@
       @close="isPaymentModalOpen = false"
     >
       <div class="space-y-6">
+        <!-- Original Amount -->
         <div class="text-center">
-          <p class="text-gray-600 mb-2">Tổng tiền cần thanh toán</p>
-          <p class="text-4xl font-bold text-coffee-600">{{ formatCurrency((existingInvoice?.total_amount || 0) + total) }}</p>
-          <p v-if="existingInvoice" class="text-sm text-gray-500 mt-1">
-            (Hóa đơn cũ: {{ formatCurrency(existingInvoice.total_amount) }} + Món mới: {{ formatCurrency(total) }})
+          <p class="text-gray-600 mb-2">Tổng tiền</p>
+          <p class="text-3xl font-bold text-coffee-600" :class="{ 'line-through text-gray-400 text-xl': appliedVoucher }">
+            {{ formatCurrency(originalTotal) }}
           </p>
+        </div>
+
+        <!-- Voucher Section -->
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <div class="flex space-x-2">
+            <input 
+              v-model="voucherCode" 
+              type="text" 
+              placeholder="Nhập mã voucher..."
+              class="flex-1 input text-sm"
+              :disabled="isApplyingVoucher || appliedVoucher"
+            />
+            <button 
+              v-if="!appliedVoucher"
+              @click="applyVoucher"
+              :disabled="isApplyingVoucher || !voucherCode"
+              class="btn-primary text-sm px-4"
+            >
+              {{ isApplyingVoucher ? '...' : 'Áp dụng' }}
+            </button>
+            <button 
+              v-else
+              @click="removeVoucher"
+              class="btn-secondary text-sm px-4"
+            >
+              Xóa
+            </button>
+          </div>
+          <p v-if="voucherError" class="text-red-500 text-sm mt-2">{{ voucherError }}</p>
+          <p v-if="appliedVoucher" class="text-emerald-600 text-sm mt-2">
+            Đã áp dụng: {{ appliedVoucher.code }} - Giảm {{ formatCurrency(discountAmount) }}
+          </p>
+        </div>
+
+        <!-- Final Amount -->
+        <div v-if="appliedVoucher" class="text-center bg-emerald-50 p-4 rounded-lg">
+          <p class="text-gray-600 mb-2">Thanh toán</p>
+          <p class="text-4xl font-bold text-emerald-600">{{ formatCurrency(finalTotal) }}</p>
+          <p class="text-sm text-emerald-500 mt-1">Tiết kiệm {{ formatCurrency(discountAmount) }}</p>
         </div>
         
         <div class="grid grid-cols-2 gap-4">
@@ -273,6 +312,7 @@ import { useProductsStore, type Product } from '@/stores/products'
 import { useTablesStore } from '@/stores/tables'
 import { useInvoicesStore } from '@/stores/invoices'
 import { useAuthStore } from '@/stores/auth'
+import { useVouchersStore, type Voucher } from '@/stores/vouchers'
 import { supabase } from '@/lib/supabaseClient'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import ModalDialog from '@/components/common/ModalDialog.vue'
@@ -283,6 +323,7 @@ const productsStore = useProductsStore()
 const tablesStore = useTablesStore()
 const invoicesStore = useInvoicesStore()
 const authStore = useAuthStore()
+const vouchersStore = useVouchersStore()
 
 const tableId = computed(() => Number(route.params.tableId))
 const tableName = computed(() => {
@@ -299,6 +340,13 @@ const currentTime = ref('')
 const existingInvoice = ref<any>(null)
 const isLoadingInvoice = ref(false)
 
+// Voucher state
+const voucherCode = ref('')
+const appliedVoucher = ref<Voucher | null>(null)
+const isApplyingVoucher = ref(false)
+const voucherError = ref('')
+const discountAmount = ref(0)
+
 let timeInterval: number | null = null
 
 const filteredProducts = computed(() => {
@@ -314,11 +362,66 @@ const totalItems = computed(() => cart.value.reduce((sum, item) => sum + item.qu
 const subtotal = computed(() => cart.value.reduce((sum, item) => sum + (item.product.price * item.quantity), 0))
 const total = computed(() => subtotal.value)
 
+// Voucher computed properties
+const originalTotal = computed(() => {
+  const existingTotal = existingInvoice.value?.total_amount || 0
+  return existingTotal + total.value
+})
+
+const finalTotal = computed(() => {
+  return Math.max(0, originalTotal.value - discountAmount.value)
+})
+
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND'
   }).format(amount)
+}
+
+const applyVoucher = async () => {
+  if (!voucherCode.value) return
+  
+  isApplyingVoucher.value = true
+  voucherError.value = ''
+  
+  try {
+    await vouchersStore.loadVouchers()
+    const voucher = vouchersStore.getVoucherByCode(voucherCode.value)
+    
+    if (!voucher) {
+      voucherError.value = 'Mã voucher không tồn tại hoặc đã hết hạn'
+      return
+    }
+    
+    // Check minimum order amount
+    if (voucher.min_order_amount && originalTotal.value < voucher.min_order_amount) {
+      voucherError.value = `Đơn hàng tối thiểu ${formatCurrency(voucher.min_order_amount)} để sử dụng voucher này`
+      return
+    }
+    
+    appliedVoucher.value = voucher
+    discountAmount.value = vouchersStore.calculateDiscount(voucher, originalTotal.value)
+    
+    // Increment usage (don't block if this fails)
+    try {
+      await vouchersStore.incrementUsage(voucher.id)
+    } catch (incrementErr) {
+      console.warn('Failed to increment voucher usage:', incrementErr)
+      // Don't show error to user, voucher is still applied
+    }
+  } catch (err) {
+    voucherError.value = 'Có lỗi xảy ra khi áp dụng voucher'
+  } finally {
+    isApplyingVoucher.value = false
+  }
+}
+
+const removeVoucher = () => {
+  appliedVoucher.value = null
+  discountAmount.value = 0
+  voucherCode.value = ''
+  voucherError.value = ''
 }
 
 const updateTime = () => {
@@ -344,7 +447,7 @@ const goBack = async () => {
     const invoice = await invoicesStore.createInvoice({
       staff_id: authStore.user.id,
       table_id: tableId.value,
-      total_amount: total.value,
+      total_amount: finalTotal.value,
       payment_method: null,
       status: 'pending',
       paid_at: null
@@ -453,10 +556,10 @@ const processPayment = async (paymentMethod: 'cash' | 'transfer') => {
         
         if (error) throw error
         
-        // Update invoice total
-        const newTotal = existingInvoice.value.total_amount + total.value
+        // Update invoice total with discount applied
+        const newTotal = existingInvoice.value.total_amount + total.value - discountAmount.value
         await invoicesStore.updateInvoice(existingInvoice.value.id, {
-          total_amount: newTotal
+          total_amount: Math.max(0, newTotal)
         })
         
       } catch (err) {
@@ -479,7 +582,7 @@ const processPayment = async (paymentMethod: 'cash' | 'transfer') => {
     const invoice = await invoicesStore.createInvoice({
       staff_id: authStore.user.id,
       table_id: tableId.value,
-      total_amount: total.value,
+      total_amount: finalTotal.value,
       payment_method: null,
       status: 'pending',
       paid_at: null

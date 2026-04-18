@@ -5,7 +5,7 @@ import type { User } from '@supabase/supabase-js'
 import { useAuthPersist } from '@/composables/useAuthPersist'
 
 // DEMO MODE - Set to true to bypass Supabase
-const DEMO_MODE = true
+const DEMO_MODE = false
 
 const DEMO_USERS = {
   'admin@coffee.com': { password: 'admin123', role: 'admin', full_name: 'Admin User' },
@@ -193,6 +193,35 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const changePassword = async (newPassword: string) => {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      if (DEMO_MODE) {
+        error.value = 'Không thể đổi mật khẩu trong chế độ DEMO'
+        return false
+      }
+
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      })
+
+      if (updateError) {
+        error.value = updateError.message
+        return false
+      }
+
+      return true
+    } catch (err) {
+      error.value = 'Có lỗi xảy ra khi đổi mật khẩu'
+      console.error('Change password error:', err)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   return {
     user,
     profile,
@@ -204,6 +233,7 @@ export const useAuthStore = defineStore('auth', () => {
     isInitialized,
     initializeAuth,
     signIn,
-    signOut
+    signOut,
+    changePassword
   }
 })

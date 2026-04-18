@@ -75,6 +75,16 @@
       </div>
     </div>
     
+    <!-- Reset Button -->
+    <div class="flex justify-end">
+      <button 
+        @click="resetDailySummary"
+        class="btn-secondary text-sm"
+      >
+        Reset doanh thu ngày
+      </button>
+    </div>
+
     <!-- Invoices List -->
     <div v-if="todayInvoices.length > 0" class="card">
       <div class="px-6 py-4 border-b border-gray-100">
@@ -180,6 +190,12 @@ const setToday = () => {
   loadSummary()
 }
 
+const resetDailySummary = () => {
+  localStorage.setItem('lastShiftEnd', new Date().toISOString())
+  todayInvoices.value = []
+  alert('Đã reset doanh thu ngày!')
+}
+
 const loadSummary = async () => {
   if (!selectedDate.value || !authStore.user) return
   
@@ -202,9 +218,34 @@ const loadSummary = async () => {
   console.log('Paid invoices:', invoicesStore.paidInvoices)
   
   // Show all paid invoices for now (remove staff filter)
-  todayInvoices.value = invoicesStore.paidInvoices
+  // Filter: only show invoices after last shift end
+  // Fallback: read directly from localStorage if store doesn't have it
+  let lastShift = invoicesStore.lastShiftEnd
+  if (!lastShift) {
+    const saved = localStorage.getItem('lastShiftEnd')
+    if (saved) {
+      lastShift = saved
+      console.log('Loaded lastShiftEnd from localStorage:', lastShift)
+    }
+  }
+  console.log('Last shift end:', lastShift)
   
-  console.log('Today invoices for staff:', todayInvoices.value)
+  if (lastShift) {
+    const shiftTime = new Date(lastShift).getTime()
+    console.log('Filtering invoices after:', new Date(lastShift).toLocaleString())
+    todayInvoices.value = invoicesStore.paidInvoices.filter(i => {
+      if (!i.paid_at) return false
+      const paidTime = new Date(i.paid_at).getTime()
+      const shouldShow = paidTime > shiftTime
+      console.log('Invoice paid_at:', i.paid_at, 'paidTime:', paidTime, 'shiftTime:', shiftTime, 'Show:', shouldShow)
+      return shouldShow
+    })
+  } else {
+    console.log('No last shift end, showing all invoices')
+    todayInvoices.value = invoicesStore.paidInvoices
+  }
+  
+  console.log('Filtered today invoices:', todayInvoices.value.length)
 }
 
 onMounted(() => {
