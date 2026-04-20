@@ -1,227 +1,165 @@
-# Coffee Shop Management System
+# Coffee Shop Management System ☕
 
-Hệ thống quản lý quán cà phê với đầy đủ chức năng order, thanh toán và báo cáo doanh thu.
+Hệ thống quản lý quán cà phê full-stack với Vue 3 frontend và Express.js backend theo mô hình MVC.
 
 ## 🚀 Demo
 
-- **Frontend**: https://coffee-shop-demo.netlify.app (hoặc chạy local)
-- **Backend API**: Chạy local với Supabase
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:3000
+- **API Documentation**: http://localhost:3000/api-docs
 
-## 📋 Tính năng chính
+## ✨ Features
 
-### Nhân viên (Staff)
-- ✅ Chọn bàn và tạo hóa đơn
-- ✅ Thêm/xóa/sửa món trong giỏ hàng
-- ✅ Thanh toán tiền mặt hoặc chuyển khoản
-- ✅ Xem hóa đơn pending và thêm món tiếp
-- ✅ Tổng kết ca làm việc (doanh thu theo ngày)
-- ✅ Quản lý trạng thái bàn (trống/có khách)
-
-### Admin
-- ✅ Quản lý sản phẩm (thêm/sửa/xóa)
-- ✅ Quản lý nhân viên
-- ✅ Xem tất cả hóa đơn
-- ✅ Báo cáo doanh thu
+| Module | Features |
+|--------|----------|
+| **Order** | Chọn bàn, thêm món theo danh mục, thanh toán |
+| **Products** | CRUD + phân loại (Cafe, Trà sữa, Nước ép,...) |
+| **Staff** | Quản lý nhân viên, phân quyền Admin/Staff |
+| **Tables** | Quản lý trạng thái bàn (trống/có khách) |
+| **Invoices** | Tạo hóa đơn, thanh toán, báo cáo doanh thu |
+| **Reports** | Tổng kết ca làm việc |
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Vue 3 + TypeScript + Vite |
-| Styling | Tailwind CSS |
-| State Management | Pinia |
-| Backend | Supabase (PostgreSQL + Auth) |
-| Database | PostgreSQL |
-| Auth | Supabase Auth |
+### Frontend
+- Vue 3 + Composition API
+- TypeScript
+- Tailwind CSS
+- Pinia (State Management)
+- Vite
+
+### Backend
+- Express.js + TypeScript
+- Supabase (PostgreSQL + Auth)
+- Swagger/OpenAPI (API Docs)
+- MVC Architecture
 
 ## 📁 Project Structure
 
 ```
-coffee-shop/
+coffeeShop/
 ├── packages/
-│   ├── frontend/          # Vue 3 SPA
-│   │   ├── src/
-│   │   │   ├── views/     # Các trang UI
-│   │   │   ├── stores/    # Pinia stores
-│   │   │   ├── components/# UI components
-│   │   │   └── lib/       # Supabase client
-│   │   └── package.json
-│   └── backend/           # Express API (optional)
-├── public/                # Static assets
-└── package.json           # Root package.json
+│   ├── frontend/              # Vue 3 SPA
+│   │   └── src/
+│   │       ├── views/         # Pages
+│   │       ├── stores/        # Pinia stores
+│   │       ├── components/    # UI components
+│   │       └── lib/           # Supabase config
+│   │
+│   └── backend/               # Express API (MVC)
+│       └── src/
+│           ├── models/        # Database queries
+│           ├── controllers/     # Business logic
+│           ├── routes/          # API routes + Swagger
+│           ├── services/        # Business services
+│           ├── middleware/      # Auth, error handling
+│           └── db/              # Database connection
+│
+└── scripts/                   # SQL migrations
 ```
 
-## 🚀 Cài đặt và chạy
+## 🚀 Quick Start
 
-### 1. Clone repository
+### 1. Clone & Install
 
 ```bash
 git clone https://github.com/CongHieu02-stack/coffeeShop.git
 cd coffeeShop
-```
 
-### 2. Cài đặt dependencies
-
-```bash
+# Install all dependencies
 npm install
 cd packages/frontend && npm install
+cd ../backend && npm install
 ```
 
-### 3. Cấu hình Supabase
+### 2. Environment Setup
 
-Tạo file `packages/frontend/.env`:
-
+**Frontend** - `packages/frontend/.env`:
 ```env
-VITE_SUPABASE_URL=https://fbrbtbkkwoqsssmbiknr.supabase.co
-VITE_SUPABASE_ANON_KEY=your_anon_key_here
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
 
-### 4. Database Schema
-
-Chạy các SQL sau trong Supabase SQL Editor:
-
-```sql
--- Bảng nhân viên
-CREATE TABLE staff (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  email text UNIQUE NOT NULL,
-  full_name text NOT NULL,
-  phone text,
-  role text DEFAULT 'staff',
-  is_active boolean DEFAULT true,
-  created_at timestamptz DEFAULT now()
-);
-
--- Bảng sản phẩm
-CREATE TABLE products (
-  id serial PRIMARY KEY,
-  name text NOT NULL,
-  price integer NOT NULL,
-  description text,
-  image_url text,
-  category text,
-  is_available boolean DEFAULT true,
-  created_at timestamptz DEFAULT now()
-);
-
--- Bảng bàn
-CREATE TABLE cafe_tables (
-  id serial PRIMARY KEY,
-  name text NOT NULL,
-  is_occupied boolean DEFAULT false
-);
-
--- Bảng hóa đơn
-CREATE TABLE invoices (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  staff_id uuid REFERENCES staff(id),
-  table_id integer REFERENCES cafe_tables(id),
-  total_amount integer DEFAULT 0,
-  payment_method text,
-  status text DEFAULT 'pending',
-  paid_at timestamptz,
-  created_at timestamptz DEFAULT now()
-);
-
--- Bảng chi tiết hóa đơn
-CREATE TABLE invoice_items (
-  id serial PRIMARY KEY,
-  invoice_id uuid REFERENCES invoices(id) ON DELETE CASCADE,
-  product_id integer REFERENCES products(id),
-  quantity integer NOT NULL,
-  unit_price integer NOT NULL,
-  subtotal integer GENERATED ALWAYS AS (quantity * unit_price) STORED
-);
-
--- Thêm 16 bàn
-INSERT INTO cafe_tables (name, is_occupied) VALUES
-('Bàn 1', false), ('Bàn 2', false), ('Bàn 3', false), ('Bàn 4', false),
-('Bàn 5', false), ('Bàn 6', false), ('Bàn 7', false), ('Bàn 8', false),
-('Bàn 9', false), ('Bàn 10', false), ('Bàn 11', false), ('Bàn 12', false),
-('Bàn 13', false), ('Bàn 14', false), ('Bàn 15', false), ('Bàn 16', false);
+**Backend** - `packages/backend/.env`:
+```env
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_KEY=your_service_key
+PORT=3000
 ```
 
-### 5. Chạy development server
+### 3. Run Servers
 
 ```bash
+# Backend (Terminal 1)
+cd packages/backend
+npm run dev
+# API: http://localhost:3000
+# Docs: http://localhost:3000/api-docs
+
+# Frontend (Terminal 2)
 cd packages/frontend
 npm run dev
+# App: http://localhost:5173
 ```
 
-Mở http://localhost:5173
+## 📚 API Documentation
 
-## 👤 Tài khoản mặc định
+Full API docs with Swagger UI at: **http://localhost:3000/api-docs**
+
+### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/login` | Login with email/password |
+| GET | `/api/auth/profile` | Get current user (JWT required) |
+
+### Products
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| GET | `/api/products` | Public |
+| POST | `/api/products` | Admin |
+| PUT | `/api/products/:id` | Admin |
+| DELETE | `/api/products/:id` | Admin |
+
+### Staff, Tables, Invoices, Reports
+Similar REST pattern with appropriate auth requirements.
+
+## 👤 Default Accounts
 
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | admin@coffee.shop | admin123 |
 | Staff | staff@coffee.shop | staff123 |
 
-## 📱 Flow sử dụng
+## �️ Database
 
-### Order và thanh toán
+Key tables: `products`, `profiles`, `cafe_tables`, `invoices`, `invoice_items`, `shift_reports`
 
-1. **Chọn bàn** → Vào trang order
-2. **Thêm món** → Giỏ hàng cập nhật realtime
-3. **Thanh toán ngay**:
-   - Bấm "Thanh toán" → Chọn phương thức (Tiền mặt/Chuyển khoản)
-   - Hóa đơn `paid`, bàn về trống, về màn hình chọn bàn
-4. **Chưa thanh toán**:
-   - Bấm back → Hóa đơn `pending`, bàn vẫn "có khách"
-   - Vào lại bàn → Thấy hóa đơn cũ, có thể thêm món hoặc thanh toán
+See `scripts/` folder for full SQL setup.
 
-### Luật làm trống bàn
+## 🔐 Auth Flow
 
-- **Bàn trống**: Có thể chọn và order bình thường
-- **Bàn có khách**: Phải vào thanh toán hóa đơn pending trước, không thể làm trống trực tiếp
-
-## 📊 Tổng kết ca
-
-- Hiển thị tất cả hóa đơn `paid` trong ngày
-- Thống kê: Tổng doanh thu, tiền mặt, chuyển khoản
-- Tự động reload khi quay lại từ trang order
-
-## 🔐 Row Level Security (RLS)
-
-Các bảng invoices và invoice_items cần RLS policies để nhân viên chỉ xem/sửa hóa đơn của mình:
-
-```sql
--- Enable RLS
-ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
-ALTER TABLE invoice_items ENABLE ROW LEVEL SECURITY;
-
--- Staff can view/update their own invoices
-CREATE POLICY "Staff can view own invoices" ON invoices
-  FOR SELECT USING (staff_id = auth.uid());
-
-CREATE POLICY "Staff can update own invoices" ON invoices
-  FOR UPDATE USING (staff_id = auth.uid());
-```
+1. Login via `/api/auth/login` → Get JWT token
+2. Include token in header: `Authorization: Bearer <token>`
+3. Test APIs in Swagger UI with "Authorize" button
 
 ## 🐛 Troubleshooting
 
-| Lỗi | Giải pháp |
-|-----|------------|
-| Không tìm thấy bàn | Kiểm tra DEMO_MODE hoặc dữ liệu trong Supabase |
-| Không lưu hóa đơn | Kiểm tra RLS policies và constraints |
-| Thanh toán lỗi | Kiểm tra staff_id và invoice status |
+| Issue | Solution |
+|-------|----------|
+| Port 3000 in use | `npx kill-port 3000` or change PORT in .env |
+| Supabase connection error | Check URL and keys in .env files |
+| Database RLS errors | Verify RLS policies or use Service Key |
 
-## 🤝 Đóng góp
+## 🤝 Contributing
 
-1. Fork repository
-2. Tạo branch mới: `git checkout -b feature/ten-tinh-nang`
-3. Commit changes: `git commit -m "Mô tả thay đổi"`
-4. Push lên branch: `git push origin feature/ten-tinh-nang`
-5. Tạo Pull Request
+1. Fork the repository
+2. Create branch: `git checkout -b feature/name`
+3. Commit: `git commit -m "Description"`
+4. Push: `git push origin feature/name`
+5. Open Pull Request
 
 ## 📄 License
 
-MIT License - Xem [LICENSE](LICENSE) để biết thêm chi tiết.
+MIT License
 
-## 👨‍💻 Tác giả
-
-- **Cong Hieu** - [@CongHieu02-stack](https://github.com/CongHieu02-stack)
-
----
-
-⭐ Star repository nếu thấy hữu ích!
+**Author:** [@CongHieu02-stack](https://github.com/CongHieu02-stack)
