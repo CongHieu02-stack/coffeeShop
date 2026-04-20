@@ -3,7 +3,33 @@ import { getSupabase } from '../db/supabase'
 
 const router = Router()
 
-// Get all tables
+/**
+ * @swagger
+ * /api/tables:
+ *   get:
+ *     summary: Get all tables
+ *     tags: [Tables]
+ *     responses:
+ *       200:
+ *         description: List of tables
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id: { type: integer }
+ *                       name: { type: string }
+ *                       is_occupied: { type: boolean }
+ *                       is_active: { type: boolean }
+ *       400:
+ *         description: Error
+ */
 router.get('/', async (_req, res) => {
   try {
     const supabase = getSupabase()
@@ -27,7 +53,24 @@ router.get('/', async (_req, res) => {
   }
 })
 
-// Get table by ID
+/**
+ * @swagger
+ * /api/tables/{id}:
+ *   get:
+ *     summary: Get table by ID with current invoice
+ *     tags: [Tables]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Table details with invoice
+ *       400:
+ *         description: Error
+ */
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params
@@ -52,7 +95,28 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// Create table
+/**
+ * @swagger
+ * /api/tables:
+ *   post:
+ *     summary: Create new table
+ *     tags: [Tables]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name: { type: string, example: 'Bàn 1' }
+ *               is_occupied: { type: boolean, default: false }
+ *     responses:
+ *       200:
+ *         description: Table created
+ *       400:
+ *         description: Error
+ */
 router.post('/', async (req, res) => {
   try {
     const supabase = getSupabase()
@@ -76,7 +140,33 @@ router.post('/', async (req, res) => {
   }
 })
 
-// Update table
+/**
+ * @swagger
+ * /api/tables/{id}:
+ *   put:
+ *     summary: Update table
+ *     tags: [Tables]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               is_occupied: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: Table updated
+ *       400:
+ *         description: Error
+ */
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params
@@ -102,7 +192,24 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// Delete table
+/**
+ * @swagger
+ * /api/tables/{id}:
+ *   delete:
+ *     summary: Delete table (soft delete)
+ *     tags: [Tables]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Table deleted
+ *       400:
+ *         description: Error
+ */
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params

@@ -3,7 +3,41 @@ import { getSupabase } from '../db/supabase'
 
 const router = Router()
 
-// Get all products
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     summary: Get all products
+ *     tags: [Products]
+ *     responses:
+ *       200:
+ *         description: List of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       price:
+ *                         type: integer
+ *                       category:
+ *                         type: string
+ *                         enum: [cafe, trasua, nuocep, latte, yogurt, khac]
+ *                       is_available:
+ *                         type: boolean
+ *       400:
+ *         description: Error
+ */
 router.get('/', async (_req, res) => {
   try {
     const supabase = getSupabase()

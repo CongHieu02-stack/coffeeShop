@@ -3,7 +3,72 @@ import { getSupabase } from '../db/supabase'
 
 const router = Router()
 
-// Get all invoices with filters
+/**
+ * @swagger
+ * /api/invoices:
+ *   get:
+ *     summary: Get all invoices with filters
+ *     tags: [Invoices]
+ *     parameters:
+ *       - in: query
+ *         name: staffId
+ *         schema:
+ *           type: string
+ *         description: Filter by staff ID
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, paid]
+ *         description: Filter by status
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Start date filter
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: End date filter
+ *     responses:
+ *       200:
+ *         description: List of invoices
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id: { type: string }
+ *                       staff_id: { type: string }
+ *                       table_id: { type: integer }
+ *                       total_amount: { type: integer }
+ *                       status: { type: string, enum: [pending, paid] }
+ *                       payment_method: { type: string, enum: [cash, transfer] }
+ *                       items:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id: { type: integer }
+ *                             product_id: { type: integer }
+ *                             quantity: { type: integer }
+ *                             unit_price: { type: integer }
+ *                             product:
+ *                               type: object
+ *                               properties:
+ *                                 name: { type: string }
+ *       400:
+ *         description: Error
+ */
 router.get('/', async (req, res) => {
   try {
     const { staffId, startDate, endDate, status } = req.query
@@ -38,7 +103,25 @@ router.get('/', async (req, res) => {
   }
 })
 
-// Get invoice by ID
+/**
+ * @swagger
+ * /api/invoices/{id}:
+ *   get:
+ *     summary: Get invoice by ID
+ *     tags: [Invoices]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Invoice ID
+ *     responses:
+ *       200:
+ *         description: Invoice details
+ *       400:
+ *         description: Error
+ */
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params
@@ -66,7 +149,40 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// Create invoice
+/**
+ * @swagger
+ * /api/invoices:
+ *   post:
+ *     summary: Create new invoice with items
+ *     tags: [Invoices]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               invoice:
+ *                 type: object
+ *                 properties:
+ *                   staff_id: { type: string }
+ *                   table_id: { type: integer }
+ *                   total_amount: { type: integer }
+ *                   status: { type: string }
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     product_id: { type: integer }
+ *                     quantity: { type: integer }
+ *                     unit_price: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Invoice created
+ *       400:
+ *         description: Error
+ */
 router.post('/', async (req, res) => {
   try {
     const { invoice, items } = req.body
@@ -112,7 +228,34 @@ router.post('/', async (req, res) => {
   }
 })
 
-// Update invoice (payment)
+/**
+ * @swagger
+ * /api/invoices/{id}:
+ *   put:
+ *     summary: Update invoice (payment or status)
+ *     tags: [Invoices]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status: { type: string, enum: [pending, paid] }
+ *               payment_method: { type: string, enum: [cash, transfer] }
+ *               paid_at: { type: string, format: date-time }
+ *     responses:
+ *       200:
+ *         description: Invoice updated
+ *       400:
+ *         description: Error
+ */
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params
@@ -149,7 +292,44 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// Get revenue summary
+/**
+ * @swagger
+ * /api/invoices/summary/revenue:
+ *   get:
+ *     summary: Get revenue summary
+ *     tags: [Invoices]
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: staffId
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Revenue summary
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 summary:
+ *                   type: object
+ *                   properties:
+ *                     total: { type: integer }
+ *                     cash: { type: integer }
+ *                     transfer: { type: integer }
+ *                     count: { type: integer }
+ *       400:
+ *         description: Error
+ */
 router.get('/summary/revenue', async (req, res) => {
   try {
     const { startDate, endDate, staffId } = req.query
