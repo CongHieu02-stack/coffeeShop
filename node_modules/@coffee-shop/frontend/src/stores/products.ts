@@ -6,14 +6,25 @@ import { supabase } from '@/lib/supabaseClient'
 const DEMO_MODE = false
 
 const DEMO_PRODUCTS: Product[] = [
-  { id: 1, name: 'Cà phê đen', price: 25000, image_url: null, is_available: true, created_at: new Date().toISOString() },
-  { id: 2, name: 'Cà phê sữa', price: 30000, image_url: null, is_available: true, created_at: new Date().toISOString() },
-  { id: 3, name: 'Bạc xỉu', price: 35000, image_url: null, is_available: true, created_at: new Date().toISOString() },
-  { id: 4, name: 'Cappuccino', price: 45000, image_url: null, is_available: true, created_at: new Date().toISOString() },
-  { id: 5, name: 'Latte', price: 45000, image_url: null, is_available: true, created_at: new Date().toISOString() },
-  { id: 6, name: 'Espresso', price: 25000, image_url: null, is_available: true, created_at: new Date().toISOString() },
-  { id: 7, name: 'Americano', price: 30000, image_url: null, is_available: true, created_at: new Date().toISOString() },
-  { id: 8, name: 'Mocha', price: 50000, image_url: null, is_available: false, created_at: new Date().toISOString() }
+  { id: 1, name: 'Cà phê đen', price: 25000, image_url: null, is_available: true, category: 'cafe', created_at: new Date().toISOString() },
+  { id: 2, name: 'Cà phê sữa', price: 30000, image_url: null, is_available: true, category: 'cafe', created_at: new Date().toISOString() },
+  { id: 3, name: 'Bạc xỉu', price: 35000, image_url: null, is_available: true, category: 'cafe', created_at: new Date().toISOString() },
+  { id: 4, name: 'Cappuccino', price: 45000, image_url: null, is_available: true, category: 'cafe', created_at: new Date().toISOString() },
+  { id: 5, name: 'Latte', price: 45000, image_url: null, is_available: true, category: 'latte', created_at: new Date().toISOString() },
+  { id: 6, name: 'Espresso', price: 25000, image_url: null, is_available: true, category: 'cafe', created_at: new Date().toISOString() },
+  { id: 7, name: 'Americano', price: 30000, image_url: null, is_available: true, category: 'cafe', created_at: new Date().toISOString() },
+  { id: 8, name: 'Mocha', price: 50000, image_url: null, is_available: false, category: 'cafe', created_at: new Date().toISOString() }
+]
+
+export type ProductCategory = 'cafe' | 'trasua' | 'nuocep' | 'latte' | 'yogurt' | 'khac'
+
+export const PRODUCT_CATEGORIES: { value: ProductCategory; label: string }[] = [
+  { value: 'cafe', label: 'Cà phê' },
+  { value: 'trasua', label: 'Trà sữa' },
+  { value: 'nuocep', label: 'Nước ép' },
+  { value: 'latte', label: 'Latte' },
+  { value: 'yogurt', label: 'Yogurt' },
+  { value: 'khac', label: 'Khác' }
 ]
 
 export interface Product {
@@ -22,6 +33,7 @@ export interface Product {
   price: number
   image_url: string | null
   is_available: boolean
+  category: ProductCategory
   created_at?: string
 }
 
@@ -38,6 +50,10 @@ export const useProductsStore = defineStore('products', () => {
 
   const getProductById = computed(() => (id: number) =>
     products.value.find(p => p.id === id)
+  )
+
+  const getProductsByCategory = computed(() => (category: ProductCategory) =>
+    products.value.filter(p => p.category === category)
   )
 
   // Actions
@@ -154,9 +170,11 @@ export const useProductsStore = defineStore('products', () => {
     error,
     availableProducts,
     getProductById,
+    getProductsByCategory,
     loadProducts,
     createProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    PRODUCT_CATEGORIES
   }
 })

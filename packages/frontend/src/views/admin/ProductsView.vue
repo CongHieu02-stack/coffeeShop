@@ -1,5 +1,33 @@
 <template>
   <div class="space-y-6">
+    <!-- Category Tabs -->
+    <div class="flex flex-wrap gap-2">
+      <button
+        @click="selectedCategory = 'all'"
+        :class="[
+          'px-4 py-2 rounded-lg font-medium transition-colors',
+          selectedCategory === 'all'
+            ? 'bg-coffee-600 text-white'
+            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+        ]"
+      >
+        Tất cả
+      </button>
+      <button
+        v-for="cat in productsStore.PRODUCT_CATEGORIES"
+        :key="cat.value"
+        @click="selectedCategory = cat.value"
+        :class="[
+          'px-4 py-2 rounded-lg font-medium transition-colors',
+          selectedCategory === cat.value
+            ? 'bg-coffee-600 text-white'
+            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+        ]"
+      >
+        {{ cat.label }}
+      </button>
+    </div>
+
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="flex items-center space-x-4">
@@ -15,7 +43,7 @@
           </svg>
         </div>
         <select v-model="filterStatus" class="input w-40">
-          <option value="all">Tất cả</option>
+          <option value="all">Tất cả trạng thái</option>
           <option value="available">Có sẵn</option>
           <option value="unavailable">Hết hàng</option>
         </select>
@@ -37,6 +65,7 @@
             <tr>
               <th>Hình ảnh</th>
               <th>Tên sản phẩm</th>
+              <th>Danh mục</th>
               <th>Giá</th>
               <th>Trạng thái</th>
               <th>Thao tác</th>
@@ -52,6 +81,11 @@
                 />
               </td>
               <td class="font-medium">{{ product.name }}</td>
+              <td>
+                <span class="px-2 py-1 bg-gray-100 rounded text-sm">
+                  {{ productsStore.PRODUCT_CATEGORIES.find(c => c.value === product.category)?.label || product.category }}
+                </span>
+              </td>
               <td>{{ formatCurrency(product.price) }}</td>
               <td>
                 <span :class="product.is_available ? 'badge-success' : 'badge-danger'">
@@ -80,7 +114,7 @@
               </td>
             </tr>
             <tr v-if="filteredProducts.length === 0">
-              <td colspan="5" class="text-center text-gray-500 py-8">
+              <td colspan="6" class="text-center text-gray-500 py-8">
                 Không tìm thấy sản phẩm nào
               </td>
             </tr>
@@ -107,14 +141,23 @@
         </div>
         
         <div>
+          <label class="label">Danh mục</label>
+          <select v-model="form.category" class="input w-full" required>
+            <option v-for="cat in productsStore.PRODUCT_CATEGORIES" :key="cat.value" :value="cat.value">
+              {{ cat.label }}
+            </option>
+          </select>
+        </div>
+
+        <div>
           <label class="label">URL Hình ảnh</label>
           <input v-model="form.image_url" type="text" class="input" placeholder="https://..." />
         </div>
-        
+
         <div class="flex items-center space-x-2">
-          <input 
-            v-model="form.is_available" 
-            type="checkbox" 
+          <input
+            v-model="form.is_available"
+            type="checkbox"
             id="is_available"
             class="w-4 h-4 rounded border-gray-300 text-coffee-600 focus:ring-coffee-500"
           />
@@ -144,7 +187,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useProductsStore, type Product } from '@/stores/products'
+import { useProductsStore, type Product, type ProductCategory } from '@/stores/products'
 import ModalDialog from '@/components/common/ModalDialog.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
@@ -152,6 +195,7 @@ const productsStore = useProductsStore()
 
 const searchQuery = ref('')
 const filterStatus = ref<'all' | 'available' | 'unavailable'>('all')
+const selectedCategory = ref<ProductCategory | 'all'>('all')
 const isModalOpen = ref(false)
 const isDeleteDialogOpen = ref(false)
 const editingProduct = ref<Product | null>(null)
@@ -161,11 +205,17 @@ const form = ref({
   name: '',
   price: 0,
   image_url: '',
-  is_available: true
+  is_available: true,
+  category: 'cafe' as ProductCategory
 })
 
 const filteredProducts = computed(() => {
   let result = productsStore.products
+  
+  // Filter by category
+  if (selectedCategory.value !== 'all') {
+    result = result.filter(p => p.category === selectedCategory.value)
+  }
   
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
@@ -194,7 +244,8 @@ const openAddModal = () => {
     name: '',
     price: 0,
     image_url: '',
-    is_available: true
+    is_available: true,
+    category: 'cafe'
   }
   isModalOpen.value = true
 }
@@ -205,7 +256,8 @@ const editProduct = (product: Product) => {
     name: product.name,
     price: product.price,
     image_url: product.image_url || '',
-    is_available: product.is_available
+    is_available: product.is_available,
+    category: product.category
   }
   isModalOpen.value = true
 }

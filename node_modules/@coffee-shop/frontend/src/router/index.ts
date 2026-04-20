@@ -54,11 +54,6 @@ const router = createRouter({
           path: 'vouchers',
           name: 'AdminVouchers',
           component: () => import('@/views/admin/VouchersView.vue')
-        },
-        {
-          path: 'order',
-          name: 'AdminOrder',
-          component: () => import('@/views/admin/OrderView.vue')
         }
       ]
     },

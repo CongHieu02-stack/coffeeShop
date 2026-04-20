@@ -26,7 +26,7 @@ const DEMO_STAFF: StaffMember[] = [
 
 export interface StaffMember {
   id: string
-  email: string
+  email?: string
   full_name: string
   role: 'admin' | 'staff'
   is_active: boolean
@@ -80,24 +80,51 @@ export const useStaffStore = defineStore('staff', () => {
     error.value = null
 
     try {
+      // Check if email already exists in current staff list
+      const existingStaff = staff.value.find(s => s.email === email)
+      if (existingStaff) {
+        error.value = 'Email này đã được sử dụng bởi nhân viên khác'
+        return null
+      }
+
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password
       })
 
-      if (authError) throw authError
+      if (authError) {
+        // Handle specific error cases
+        const errorMsg = authError.message || authError.toString()
+        console.error('Auth error details:', authError)
+        if (errorMsg.includes('already registered') || errorMsg.includes('already exists')) {
+          error.value = 'Email này đã được đăng ký trong hệ thống. Vui lòng sử dụng email khác hoặc kích hoạt lại tài khoản cũ.'
+        } else if (errorMsg.includes('rate limit') || errorMsg.includes('over_email_send_rate_limit')) {
+          error.value = 'Đã đạt giới hạn gửi email. Vui lòng thử lại sau 1 giờ, hoặc tắt "Confirm email" trong Supabase Dashboard → Authentication → Providers → Email.'
+        } else {
+          error.value = 'Lỗi tạo tài khoản: ' + errorMsg
+        }
+        return null
+      }
 
       if (authData.user) {
-        // Update profile
+        // Upsert profile (insert or update)
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .update({ full_name: fullName, role })
-          .eq('id', authData.user.id)
+          .upsert({
+            id: authData.user.id,
+            full_name: fullName,
+            role: role,
+            is_active: true
+          }, { onConflict: 'id' })
           .select()
           .single()
 
-        if (profileError) throw profileError
+        if (profileError) {
+          console.error('Profile upsert error:', profileError)
+          error.value = 'Lỗi cập nhật profile: ' + (profileError.message || profileError.toString())
+          throw profileError
+        }
 
         if (profileData) {
           staff.value.push(profileData)
@@ -105,8 +132,10 @@ export const useStaffStore = defineStore('staff', () => {
         }
       }
       return null
-    } catch (err) {
-      error.value = 'Không thể tạo nhân viên'
+    } catch (err: any) {
+      if (!error.value) {
+        error.value = 'Không thể tạo nhân viên'
+      }
       console.error('Error creating staff:', err)
       return null
     } finally {
@@ -149,6 +178,38 @@ export const useStaffStore = defineStore('staff', () => {
     return updateStaff(id, { is_active: isActive })
   }
 
+  const deleteStaff = async (id: string) => {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      // Check if trying to delete self
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.id === id) {
+        error.value = 'Không thể xóa chính bạn'
+        return false
+      }
+
+      // Delete from profiles first (RLS should handle auth.users)
+      const { error: deleteError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', id)
+
+      if (deleteError) throw deleteError
+
+      // Remove from local state
+      staff.value = staff.value.filter(s => s.id !== id)
+      return true
+    } catch (err: any) {
+      error.value = 'Không thể xóa nhân viên: ' + (err.message || 'Lỗi RLS policy')
+      console.error('Error deleting staff:', err)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   return {
     staff,
     isLoading,
@@ -158,6 +219,7 @@ export const useStaffStore = defineStore('staff', () => {
     loadStaff,
     createStaff,
     updateStaff,
-    toggleStaffStatus
+    toggleStaffStatus,
+    deleteStaff
   }
 })

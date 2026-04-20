@@ -52,22 +52,46 @@
               </td>
               <td class="text-gray-500">{{ formatDate(member.created_at) }}</td>
               <td>
-                <button 
-                  @click="toggleStatus(member)"
-                  :class="[
-                    'p-2 rounded-lg transition-colors',
-                    member.is_active 
-                      ? 'text-red-600 hover:bg-red-50' 
-                      : 'text-green-600 hover:bg-green-50'
-                  ]"
-                >
-                  <svg v-if="member.is_active" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                  </svg>
-                  <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </button>
+                <div class="flex space-x-2">
+                  <!-- Edit button -->
+                  <button 
+                    @click="openEditModal(member)"
+                    class="p-2 rounded-lg transition-colors text-blue-600 hover:bg-blue-50"
+                    title="Sửa"
+                  >
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <!-- Toggle status button -->
+                  <button 
+                    @click="toggleStatus(member)"
+                    :class="[
+                      'p-2 rounded-lg transition-colors',
+                      member.is_active 
+                        ? 'text-red-600 hover:bg-red-50' 
+                        : 'text-green-600 hover:bg-green-50'
+                    ]"
+                    :title="member.is_active ? 'Vô hiệu hóa' : 'Kích hoạt'"
+                  >
+                    <svg v-if="member.is_active" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                    <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                  <!-- Delete button -->
+                  <button 
+                    @click="confirmDelete(member)"
+                    class="p-2 rounded-lg transition-colors text-red-600 hover:bg-red-50"
+                    title="Xóa"
+                  >
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </td>
             </tr>
             <tr v-if="filteredStaff.length === 0">
@@ -84,9 +108,12 @@
     <ModalDialog
       :is-open="isModalOpen"
       title="Thêm nhân viên mới"
-      @close="isModalOpen = false"
+      @close="closeModal"
     >
       <form @submit.prevent="createStaff" class="space-y-4">
+        <div v-if="staffStore.error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {{ staffStore.error }}
+        </div>
         <div>
           <label class="label">Họ tên</label>
           <input v-model="form.full_name" type="text" class="input" required />
@@ -111,12 +138,74 @@
         </div>
         
         <div class="flex justify-end space-x-3 pt-4">
-          <button type="button" @click="isModalOpen = false" class="btn-secondary">Hủy</button>
+          <button type="button" @click="closeModal" class="btn-secondary">Hủy</button>
           <button type="submit" class="btn-primary" :disabled="staffStore.isLoading">
             Thêm nhân viên
           </button>
         </div>
       </form>
+    </ModalDialog>
+
+    <!-- Edit Staff Modal -->
+    <ModalDialog
+      :is-open="isEditModalOpen"
+      title="Sửa nhân viên"
+      @close="closeEditModal"
+    >
+      <form @submit.prevent="updateStaff" class="space-y-4">
+        <div v-if="staffStore.error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {{ staffStore.error }}
+        </div>
+        <div>
+          <label class="label">Họ tên</label>
+          <input v-model="editForm.full_name" type="text" class="input" required />
+        </div>
+        
+        <div>
+          <label class="label">Vai trò</label>
+          <select v-model="editForm.role" class="input" required>
+            <option value="staff">Nhân viên</option>
+            <option value="admin">Quản trị viên</option>
+          </select>
+        </div>
+        
+        <div class="flex justify-end space-x-3 pt-4">
+          <button type="button" @click="closeEditModal" class="btn-secondary">Hủy</button>
+          <button type="submit" class="btn-primary" :disabled="staffStore.isLoading">
+            Cập nhật
+          </button>
+        </div>
+      </form>
+    </ModalDialog>
+
+    <!-- Delete Confirmation Modal -->
+    <ModalDialog
+      :is-open="isDeleteModalOpen"
+      title="Xác nhận xóa"
+      @close="closeDeleteModal"
+    >
+      <div class="space-y-4">
+        <p class="text-gray-700">
+          Bạn có chắc chắn muốn xóa nhân viên <strong>{{ staffToDelete?.full_name }}</strong>?
+        </p>
+        <p class="text-red-600 text-sm">Hành động này không thể hoàn tác.</p>
+        
+        <div v-if="staffStore.error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {{ staffStore.error }}
+        </div>
+        
+        <div class="flex justify-end space-x-3 pt-4">
+          <button type="button" @click="closeDeleteModal" class="btn-secondary">Hủy</button>
+          <button 
+            type="button" 
+            @click="deleteStaff" 
+            class="btn-danger bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+            :disabled="staffStore.isLoading"
+          >
+            Xóa
+          </button>
+        </div>
+      </div>
     </ModalDialog>
   </div>
 </template>
@@ -143,7 +232,7 @@ const filteredStaff = computed(() => {
   const query = searchQuery.value.toLowerCase()
   return staffStore.staff.filter(s => 
     s.full_name.toLowerCase().includes(query) ||
-    s.email.toLowerCase().includes(query)
+    (s.email?.toLowerCase().includes(query) ?? false)
   )
 })
 
@@ -174,8 +263,76 @@ const createStaff = async () => {
   }
 }
 
+const closeModal = () => {
+  isModalOpen.value = false
+  staffStore.error = null
+}
+
 const toggleStatus = async (member: StaffMember) => {
   await staffStore.toggleStaffStatus(member.id, !member.is_active)
+}
+
+// Edit modal state
+const isEditModalOpen = ref(false)
+const editingStaff = ref<StaffMember | null>(null)
+const editForm = ref({
+  full_name: '',
+  role: 'staff' as 'admin' | 'staff'
+})
+
+const openEditModal = (member: StaffMember) => {
+  editingStaff.value = member
+  editForm.value = {
+    full_name: member.full_name,
+    role: member.role
+  }
+  isEditModalOpen.value = true
+  staffStore.error = null
+}
+
+const closeEditModal = () => {
+  isEditModalOpen.value = false
+  editingStaff.value = null
+  staffStore.error = null
+}
+
+const updateStaff = async () => {
+  if (!editingStaff.value) return
+  
+  const success = await staffStore.updateStaff(editingStaff.value.id, {
+    full_name: editForm.value.full_name,
+    role: editForm.value.role
+  })
+  
+  if (success) {
+    closeEditModal()
+  }
+}
+
+// Delete modal state
+const isDeleteModalOpen = ref(false)
+const staffToDelete = ref<StaffMember | null>(null)
+
+const confirmDelete = (member: StaffMember) => {
+  staffToDelete.value = member
+  isDeleteModalOpen.value = true
+  staffStore.error = null
+}
+
+const closeDeleteModal = () => {
+  isDeleteModalOpen.value = false
+  staffToDelete.value = null
+  staffStore.error = null
+}
+
+const deleteStaff = async () => {
+  if (!staffToDelete.value) return
+  
+  const success = await staffStore.deleteStaff(staffToDelete.value.id)
+  
+  if (success) {
+    closeDeleteModal()
+  }
 }
 
 onMounted(() => {

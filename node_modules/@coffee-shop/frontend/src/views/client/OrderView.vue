@@ -31,7 +31,35 @@
           </svg>
         </div>
       </div>
-      
+
+      <!-- Category Tabs -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button
+          @click="selectedCategory = 'all'"
+          :class="[
+            'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+            selectedCategory === 'all'
+              ? 'bg-coffee-600 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+          ]"
+        >
+          Tất cả
+        </button>
+        <button
+          v-for="cat in productsStore.PRODUCT_CATEGORIES"
+          :key="cat.value"
+          @click="selectedCategory = cat.value"
+          :class="[
+            'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+            selectedCategory === cat.value
+              ? 'bg-coffee-600 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+          ]"
+        >
+          {{ cat.label }}
+        </button>
+      </div>
+
       <!-- Products Grid -->
       <div class="flex-1 overflow-y-auto">
         <div class="grid grid-cols-3 gap-4">
@@ -308,7 +336,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useProductsStore, type Product } from '@/stores/products'
+import { useProductsStore, type Product, type ProductCategory } from '@/stores/products'
 import { useTablesStore } from '@/stores/tables'
 import { useInvoicesStore } from '@/stores/invoices'
 import { useAuthStore } from '@/stores/auth'
@@ -332,6 +360,7 @@ const tableName = computed(() => {
 })
 
 const searchQuery = ref('')
+const selectedCategory = ref<ProductCategory | 'all'>('all')
 const cart = ref<{ product: Product; quantity: number }[]>([])
 const isCreating = ref(false)
 const isPaymentModalOpen = ref(false)
@@ -350,12 +379,19 @@ const discountAmount = ref(0)
 let timeInterval: number | null = null
 
 const filteredProducts = computed(() => {
-  if (!searchQuery.value) return productsStore.availableProducts
+  let result = productsStore.availableProducts
   
-  const query = searchQuery.value.toLowerCase()
-  return productsStore.availableProducts.filter(p => 
-    p.name.toLowerCase().includes(query)
-  )
+  // Filter by category
+  if (selectedCategory.value !== 'all') {
+    result = result.filter(p => p.category === selectedCategory.value)
+  }
+  
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter(p => p.name.toLowerCase().includes(query))
+  }
+  
+  return result
 })
 
 const totalItems = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0))
