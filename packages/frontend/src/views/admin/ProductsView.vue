@@ -36,13 +36,13 @@
             v-model="searchQuery"
             type="text"
             placeholder="Tìm kiếm sản phẩm..."
-            class="input w-64 pl-10"
+            class="input w-full sm:w-64 pl-10"
           />
           <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
-        <select v-model="filterStatus" class="input w-40">
+        <select v-model="filterStatus" class="input w-full sm:w-40">
           <option value="all">Tất cả trạng thái</option>
           <option value="available">Có sẵn</option>
           <option value="unavailable">Hết hàng</option>

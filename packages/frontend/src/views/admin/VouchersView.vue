@@ -195,8 +195,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useVouchersStore, type Voucher } from '@/stores/vouchers'
+import { useToast } from '@/composables/useToast'
 
 const vouchersStore = useVouchersStore()
+const { error: showError } = useToast()
 const isModalOpen = ref(false)
 const editingVoucher = ref<Voucher | null>(null)
 const voucherToDelete = ref<Voucher | null>(null)
@@ -311,7 +313,7 @@ const saveVoucher = async () => {
     }
     closeModal()
   } catch (err) {
-    alert('Có lỗi xảy ra. Vui lòng thử lại.')
+    showError('Lỗi', 'Có lỗi xảy ra. Vui lòng thử lại.')
   }
 }
 
@@ -329,7 +331,7 @@ const deleteVoucher = async () => {
     await vouchersStore.deleteVoucher(voucherToDelete.value.id)
     voucherToDelete.value = null
   } catch (err) {
-    alert('Có lỗi xảy ra khi xóa.')
+    showError('Lỗi', 'Có lỗi xảy ra khi xóa.')
   }
 }
 

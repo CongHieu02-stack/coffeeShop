@@ -275,6 +275,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useStaffStore } from '@/stores/staff'
 import { supabase } from '@/lib/supabaseClient'
+import { useToast } from '@/composables/useToast'
 import Chart from 'chart.js/auto'
 
 interface ShiftReport {
@@ -294,6 +295,7 @@ interface ShiftReport {
 }
 
 const staffStore = useStaffStore()
+const { error: showError } = useToast()
 const shiftReports = ref<ShiftReport[]>([])
 const isLoading = ref(false)
 const selectedReport = ref<ShiftReport | null>(null)
@@ -410,7 +412,7 @@ const loadShiftReports = async () => {
         details: error.details,
         hint: error.hint
       })
-      alert('Lỗi tải phiếu kết ca: ' + error.message)
+      showError('Lỗi', 'Lỗi tải phiếu kết ca: ' + error.message)
       return
     }
 

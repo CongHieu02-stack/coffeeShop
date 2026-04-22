@@ -83,7 +83,14 @@ export const useProductStore = defineStore('products', () => {
   /**
    * Tạo sản phẩm mới (Admin)
    */
-  const createProduct = async (productData: Omit<Product, 'id' | 'createdAt'>): Promise<Product | null> => {
+  const createProduct = async (productData: {
+    name: string
+    price: number
+    imageUrl: string
+    isAvailable: boolean
+    category: ProductCategory
+    isActive: boolean
+  }): Promise<Product | null> => {
     isLoading.value = true
     error.value = null
 

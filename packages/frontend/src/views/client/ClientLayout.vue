@@ -1,7 +1,34 @@
 <template>
   <div class="min-h-screen bg-gray-50 flex w-full">
+    <!-- Mobile Header -->
+    <div class="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50">
+      <div class="flex items-center justify-between px-4 py-3">
+        <button @click="isSidebarOpen = !isSidebarOpen" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <span class="text-lg font-bold text-gray-900">Coffee Shop</span>
+        <div class="w-10"></div>
+      </div>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div 
+      v-if="isSidebarOpen" 
+      @click="isSidebarOpen = false"
+      class="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+    ></div>
+
     <!-- Sidebar -->
-    <aside class="w-64 bg-white border-r border-gray-200 flex-shrink-0 h-screen sticky top-0 flex flex-col">
+    <aside 
+      :class="[
+        'bg-white border-r border-gray-200 flex-shrink-0 h-screen flex flex-col z-50 transition-transform duration-300 ease-in-out',
+        'fixed left-0 top-0 bottom-0 w-64 transform',
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+        'lg:translate-x-0 lg:static lg:top-0'
+      ]"
+    >
       <!-- Logo -->
       <div class="h-16 flex items-center px-6 border-b border-gray-200">
         <div class="flex items-center space-x-2">
@@ -79,7 +106,7 @@
     
     <!-- Main content -->
     <main class="flex-1 overflow-hidden flex flex-col">
-      <div class="flex-1 overflow-auto p-8">
+      <div class="flex-1 overflow-auto p-4 lg:p-8 pt-16 lg:pt-8">
         <router-view />
       </div>
     </main>
@@ -109,6 +136,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const isEndShiftModalOpen = ref(false)
 const isChangePasswordModalOpen = ref(false)
+const isSidebarOpen = ref(false)
 
 const openEndShiftModal = () => {
   isEndShiftModalOpen.value = true

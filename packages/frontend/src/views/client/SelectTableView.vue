@@ -30,35 +30,35 @@
       <LoadingSpinner text="Đang tải..." />
     </div>
     
-    <div v-else class="grid grid-cols-4 gap-6">
+    <div v-else class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
       <button
         v-for="table in tablesStore.tables"
         :key="table.id"
         @click="selectTable(table)"
         :class="[
           'relative p-6 rounded-xl border-2 transition-all text-left',
-          table.is_occupied 
+          (table as any).is_occupied 
             ? 'bg-red-50 border-red-200 hover:bg-red-100 hover:border-red-300 hover:shadow-lg cursor-pointer' 
             : 'bg-green-50 border-green-200 hover:bg-green-100 hover:border-green-300 hover:shadow-lg cursor-pointer'
         ]"
       >
         <div class="flex items-center justify-between mb-2">
-          <span class="text-2xl font-bold" :class="table.is_occupied ? 'text-red-700' : 'text-green-700'">
+          <span class="text-2xl font-bold" :class="(table as any).is_occupied ? 'text-red-700' : 'text-green-700'">
             {{ table.name || `Bàn ${table.id}` }}
           </span>
           <div 
-            :class="[
+            :class="
               'w-3 h-3 rounded-full',
-              table.is_occupied ? 'bg-red-500' : 'bg-green-500'
-            ]"
+              (table as any).is_occupied ? 'bg-red-500' : 'bg-green-500'
+            "
           ></div>
         </div>
         
-        <p :class="table.is_occupied ? 'text-red-600' : 'text-green-600'" class="text-sm mb-3">
-          {{ table.is_occupied ? 'Đã có khách - Click để xem/thêm món' : 'Còn trống - Click để order' }}
+        <p :class="(table as any).is_occupied ? 'text-red-600' : 'text-green-600'" class="text-sm mb-3">
+          {{ (table as any).is_occupied ? 'Đã có khách - Click để xem/thêm món' : 'Còn trống - Click để order' }}
         </p>
         
-        <div v-if="table.is_occupied" class="flex flex-col gap-2">
+        <div v-if="(table as any).is_occupied" class="flex flex-col gap-2">
           <!-- View Order Button -->
           <button
             @click.stop="viewTableOrder(table)"
@@ -86,7 +86,7 @@
         <!-- Status Icon -->
         <div class="absolute top-4 right-4">
           <svg 
-            v-if="table.is_occupied"
+            v-if="(table as any).is_occupied"
             class="w-6 h-6 text-red-500" 
             fill="none" 
             viewBox="0 0 24 24" 
@@ -122,18 +122,21 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useTablesStore, type Table } from '@/stores/tables'
+import { useTablesStore } from '@/stores/tables'
+import { useToast } from '@/composables/useToast'
+import type { Table } from '@/models'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
 const router = useRouter()
 const tablesStore = useTablesStore()
+const { warning } = useToast()
 
 const isConfirmDialogOpen = ref(false)
 const tableToClear = ref<Table | null>(null)
 
 const selectTable = (table: Table) => {
-  if (!table.is_occupied) {
+  if (!(table as any).is_occupied) {
     router.push(`/client/order/${table.id}`)
   }
 }
@@ -144,7 +147,7 @@ const viewTableOrder = (table: Table) => {
 
 const confirmClearTable = (table: Table) => {
   // Check if table has pending invoice
-  alert('Bàn đang có khách! Vui lòng vào thanh toán trước khi làm trống bàn.')
+  warning('Cảnh báo', 'Bàn đang có khách! Vui lòng vào thanh toán trước khi làm trống bàn.')
   // Redirect to order page to pay
   router.push(`/client/order/${table.id}`)
 }

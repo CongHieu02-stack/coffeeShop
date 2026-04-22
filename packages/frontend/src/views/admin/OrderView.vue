@@ -136,12 +136,14 @@ import { useTablesStore } from '@/stores/tables'
 import { useInvoicesStore } from '@/stores/invoices'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const productsStore = useProductsStore()
 const tablesStore = useTablesStore()
 const invoicesStore = useInvoicesStore()
 const authStore = useAuthStore()
+const { success } = useToast()
 
 const searchQuery = ref('')
 const selectedTable = ref<number | ''>('')
@@ -222,7 +224,7 @@ const createInvoice = async () => {
     // Clear cart
     cart.value = []
     selectedTable.value = ''
-    alert('Hóa đơn đã được tạo thành công!')
+    success('Thành công', 'Hóa đơn đã được tạo thành công!')
     router.push('/admin/invoices')
   }
 }

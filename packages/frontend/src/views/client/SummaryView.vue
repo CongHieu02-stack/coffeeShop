@@ -148,9 +148,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useInvoicesStore, type Invoice } from '@/stores/invoices'
 import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/composables/useToast'
 
 const invoicesStore = useInvoicesStore()
 const authStore = useAuthStore()
+const { success, error: showError } = useToast()
 
 const selectedDate = ref('')
 const todayInvoices = ref<Invoice[]>([])
@@ -210,7 +212,7 @@ const setToday = () => {
 const resetDailySummary = () => {
   localStorage.setItem('lastShiftEnd', new Date().toISOString())
   todayInvoices.value = []
-  alert('Đã reset doanh thu ngày!')
+  success('Thành công', 'Đã reset doanh thu ngày!')
 }
 
 const loadSummary = async () => {
@@ -294,14 +296,14 @@ const endShift = async () => {
     // Mark shift as ended
     localStorage.setItem('lastShiftEnd', new Date().toISOString())
     
-    alert('✅ Đã kết ca thành công! Admin có thể xem phiếu kết ca.')
+    success('Thành công', 'Đã kết ca thành công! Admin có thể xem phiếu kết ca.')
     
     // Clear current invoices
     todayInvoices.value = []
     
   } catch (err: any) {
     console.error('Error ending shift:', err)
-    alert('❌ Lỗi kết ca: ' + (err.message || 'Không thể lưu phiếu kết ca'))
+    showError('Lỗi', 'Lỗi kết ca: ' + (err.message || 'Không thể lưu phiếu kết ca'))
   } finally {
     isEndingShift.value = false
   }

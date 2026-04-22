@@ -1,5 +1,5 @@
 <template>
-  <div class="h-[calc(100vh-140px)] flex gap-6">
+  <div class="h-[calc(100vh-140px)] flex flex-col lg:flex-row gap-4 lg:gap-6">
     <!-- Products Panel -->
     <div class="flex-1 flex flex-col">
       <!-- Header -->
@@ -19,7 +19,7 @@
           </div>
         </div>
         
-        <div class="relative w-64">
+        <div class="relative w-full lg:w-64">
           <input
             v-model="searchQuery"
             type="text"
@@ -33,7 +33,7 @@
       </div>
 
       <!-- Category Tabs -->
-      <div class="flex flex-wrap gap-2 mb-4">
+      <div class="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-2">
         <button
           @click="selectedCategory = 'all'"
           :class="[
@@ -62,7 +62,7 @@
 
       <!-- Products Grid -->
       <div class="flex-1 overflow-y-auto">
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-4">
           <button
             v-for="product in filteredProducts"
             :key="product.id"
@@ -87,7 +87,7 @@
     </div>
     
     <!-- Cart Panel -->
-    <div class="w-96 card flex flex-col shadow-lg">
+    <div class="w-full lg:w-96 card flex flex-col shadow-lg order-first lg:order-last">
       <div class="p-4 border-b border-gray-100 bg-coffee-50">
         <h3 class="text-lg font-semibold text-coffee-900 flex items-center">
           <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -342,6 +342,7 @@ import { useInvoicesStore } from '@/stores/invoices'
 import { useAuthStore } from '@/stores/auth'
 import { useVouchersStore, type Voucher } from '@/stores/vouchers'
 import { Product, type ProductCategory, PRODUCT_CATEGORIES } from '@/models'
+import { useToast } from '@/composables/useToast'
 import { supabase } from '@/lib/supabaseClient'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import ModalDialog from '@/components/common/ModalDialog.vue'
@@ -353,6 +354,7 @@ const tablesStore = useTablesStore()
 const invoicesStore = useInvoicesStore()
 const authStore = useAuthStore()
 const vouchersStore = useVouchersStore()
+const { success, error: showError } = useToast()
 
 const tableId = computed(() => Number(route.params.tableId))
 const tableName = computed(() => {
@@ -556,13 +558,13 @@ const addToExistingOrder = async () => {
       total_amount: newTotal
     })
     
-    alert(`Đã thêm ${totalItems.value} món vào hóa đơn!\nTổng tiền mới: ${formatCurrency(newTotal)}`)
+    success('Thành công', `Đã thêm ${totalItems.value} món vào hóa đơn! Tổng tiền mới: ${formatCurrency(newTotal)}`)
     
     cart.value = []
     router.push('/client')
   } catch (err) {
     console.error('Error adding to order:', err)
-    alert('Không thể thêm món vào hóa đơn')
+    showError('Lỗi', 'Không thể thêm món vào hóa đơn')
   } finally {
     isCreating.value = false
   }
@@ -572,7 +574,7 @@ const processPayment = async (paymentMethod: 'cash' | 'transfer') => {
   console.log('processPayment called', { user: authStore.user, userId: authStore.user?.id, existingInvoice: existingInvoice.value?.id })
   
   if (!authStore.user?.id) {
-    alert('Lỗi: Không tìm thấy thông tin nhân viên. Vui lòng đăng nhập lại.')
+    showError('Lỗi', 'Không tìm thấy thông tin nhân viên. Vui lòng đăng nhập lại.')
     return
   }
   
@@ -604,7 +606,7 @@ const processPayment = async (paymentMethod: 'cash' | 'transfer') => {
         
       } catch (err) {
         console.error('Error adding items before payment:', err)
-        alert('Không thể thêm món vào hóa đơn')
+        showError('Lỗi', 'Không thể thêm món vào hóa đơn')
         isProcessing.value = false
         return
       }
@@ -629,7 +631,7 @@ const processPayment = async (paymentMethod: 'cash' | 'transfer') => {
     }, items)
     
     if (!invoice) {
-      alert('Lỗi: Không thể tạo hóa đơn')
+      showError('Lỗi', 'Không thể tạo hóa đơn')
       isProcessing.value = false
       return
     }
@@ -640,7 +642,7 @@ const processPayment = async (paymentMethod: 'cash' | 'transfer') => {
   // Pay the invoice
   // Pay the invoice
 if (!invoiceId) {
-  alert('Lỗi: Không tìm thấy hóa đơn')
+  showError('Lỗi', 'Không tìm thấy hóa đơn')
   isProcessing.value = false
   return
 }
@@ -650,9 +652,9 @@ await invoicesStore.updateInvoice(invoiceId, {
   total_amount: finalTotal.value
 })
 
-const success = await invoicesStore.payInvoice(invoiceId, paymentMethod)
+const paymentSuccess = await invoicesStore.payInvoice(invoiceId, paymentMethod)
 
-if (success) {
+if (paymentSuccess) {
   const finalAmount = finalTotal.value
 
   cart.value = []
@@ -667,13 +669,11 @@ if (success) {
 
   await tablesStore.updateTableStatus(tableId.value, false)
 
-  alert(`Thanh toán thành công!
-Phương thức: ${paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}
-Tổng tiền: ${formatCurrency(finalAmount)}`)
+  success('Thanh toán thành công', `Phương thức: ${paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'} - Tổng tiền: ${formatCurrency(finalAmount)}`)
 
   router.push('/client')
 } else {
-  alert('Lỗi: Không thể thanh toán hóa đơn')
+  showError('Lỗi', 'Không thể thanh toán hóa đơn')
   isProcessing.value = false
 }
 }

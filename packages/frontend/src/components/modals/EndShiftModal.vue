@@ -137,6 +137,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import { useInvoicesStore } from '@/stores/invoices'
 import { useTablesStore } from '@/stores/tables'
@@ -156,6 +157,7 @@ const emit = defineEmits<{
 }>()
 
 const authStore = useAuthStore()
+const { success, error: showError, warning } = useToast()
 const invoicesStore = useInvoicesStore()
 const tablesStore = useTablesStore()
 const router = useRouter()
@@ -277,7 +279,7 @@ const exportToPDF = async () => {
   try {
     const element = document.getElementById('shift-report')
     if (!element) {
-      alert('Không tìm thấy nội dung báo cáo')
+      showError('Lỗi', 'Không tìm thấy nội dung báo cáo')
       return
     }
 
@@ -307,14 +309,14 @@ const exportToPDF = async () => {
     const fileName = `ket-ca-${authStore.userName}-${today.value}.pdf`
     doc.save(fileName)
 
-    alert('Đã xuất hóa đơn PDF thành công!')
+    success('Thành công', 'Đã xuất hóa đơn PDF thành công!')
 
     // Save shift report to database for admin
     try {
       await saveShiftReport()
-      alert('✅ Đã lưu phiếu kết ca vào hệ thống!\nHệ thống sẽ tự động đăng xuất.')
+      success('Thành công', 'Đã lưu phiếu kết ca vào hệ thống! Hệ thống sẽ tự động đăng xuất.')
     } catch (err: any) {
-      alert('⚠️ Xuất PDF thành công nhưng lưu phiếu kết ca thất bại!\nVui lòng liên hệ admin.')
+      warning('Cảnh báo', 'Xuất PDF thành công nhưng lưu phiếu kết ca thất bại! Vui lòng liên hệ admin.')
       console.error('Save shift report error:', err)
     }
 
@@ -328,7 +330,7 @@ const exportToPDF = async () => {
     }, 2000)
   } catch (err) {
     console.error('Error exporting PDF:', err)
-    alert('❌ Có lỗi khi xuất PDF. Vui lòng thử lại.')
+    showError('Lỗi', 'Có lỗi khi xuất PDF. Vui lòng thử lại.')
   } finally {
     isExporting.value = false
   }
