@@ -75,8 +75,21 @@
       </div>
     </div>
     
-    <!-- Reset Button -->
-    <div class="flex justify-end">
+    <!-- Action Buttons -->
+    <div class="flex justify-end space-x-3">
+      <button 
+        v-if="todayInvoices.length > 0"
+        @click="endShift"
+        :disabled="isEndingShift"
+        class="btn-primary"
+      >
+        <span v-if="isEndingShift" class="animate-spin mr-2">⟳</span>
+        <svg v-else class="w-5 h-5 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        {{ isEndingShift ? 'Đang kết ca...' : 'Kết ca & Lưu' }}
+      </button>
+      
       <button 
         @click="resetDailySummary"
         class="btn-secondary text-sm"
@@ -141,6 +154,10 @@ const authStore = useAuthStore()
 
 const selectedDate = ref('')
 const todayInvoices = ref<Invoice[]>([])
+const isEndingShift = ref(false)
+
+// Import supabase for API call
+import { supabase } from '@/lib/supabaseClient'
 
 const summary = computed(() => {
   if (todayInvoices.value.length === 0) return null
@@ -246,6 +263,48 @@ const loadSummary = async () => {
   }
   
   console.log('Filtered today invoices:', todayInvoices.value.length)
+}
+
+const endShift = async () => {
+  if (!summary.value || !authStore.user) return
+  
+  if (!confirm('Bạn có chắc muốn kết ca? Dữ liệu sẽ được lưu và gửi cho admin.')) {
+    return
+  }
+  
+  isEndingShift.value = true
+  
+  try {
+    // Create shift report via Supabase
+    const { data, error } = await supabase
+      .from('shift_reports')
+      .insert({
+        staff_id: authStore.user.id,
+        total_cash: summary.value.cash,
+        total_transfer: summary.value.transfer,
+        total_amount: summary.value.total,
+        invoice_count: summary.value.count,
+        note: `Kết ca ngày ${selectedDate.value}`
+      })
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // Mark shift as ended
+    localStorage.setItem('lastShiftEnd', new Date().toISOString())
+    
+    alert('✅ Đã kết ca thành công! Admin có thể xem phiếu kết ca.')
+    
+    // Clear current invoices
+    todayInvoices.value = []
+    
+  } catch (err: any) {
+    console.error('Error ending shift:', err)
+    alert('❌ Lỗi kết ca: ' + (err.message || 'Không thể lưu phiếu kết ca'))
+  } finally {
+    isEndingShift.value = false
+  }
 }
 
 onMounted(() => {
