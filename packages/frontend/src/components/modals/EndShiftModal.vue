@@ -170,14 +170,14 @@ const saveShiftReport = async () => {
   try {
     const reportData = {
       staff_id: authStore.user?.id,
-      shift_date: today.value,
-      total_revenue: revenueSummary.value.total,
-      cash_revenue: revenueSummary.value.cash,
-      transfer_revenue: revenueSummary.value.transfer,
+      total_cash: revenueSummary.value.cash,
+      total_transfer: revenueSummary.value.transfer,
+      total_amount: revenueSummary.value.total,
       invoice_count: revenueSummary.value.count,
-      invoice_ids: todayPaidInvoices.value.map(i => i.id),
-      pdf_file_name: `ket-ca-${authStore.userName}-${today.value}.pdf`
+      note: `Kết ca - ${authStore.userName} - ${today.value}`
     }
+
+    console.log('📤 Saving shift report:', reportData)
 
     const { data, error } = await supabase
       .from('shift_reports')
@@ -186,12 +186,20 @@ const saveShiftReport = async () => {
       .single()
 
     if (error) {
-      console.error('Error saving shift report:', error)
+      console.error('❌ Error saving shift report:', error)
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      })
+      throw error
     } else {
-      console.log('Shift report saved:', data)
+      console.log('✅ Shift report saved successfully:', data)
     }
-  } catch (err) {
-    console.error('Error saving shift report:', err)
+  } catch (err: any) {
+    console.error('❌ Exception in saveShiftReport:', err)
+    throw err
   }
 }
 
@@ -299,25 +307,28 @@ const exportToPDF = async () => {
     const fileName = `ket-ca-${authStore.userName}-${today.value}.pdf`
     doc.save(fileName)
 
-    alert('Đã xuất hóa đơn PDF thành công!\nHệ thống sẽ tự động đăng xuất.')
+    alert('Đã xuất hóa đơn PDF thành công!')
 
     // Save shift report to database for admin
-    await saveShiftReport()
+    try {
+      await saveShiftReport()
+      alert('✅ Đã lưu phiếu kết ca vào hệ thống!\nHệ thống sẽ tự động đăng xuất.')
+    } catch (err: any) {
+      alert('⚠️ Xuất PDF thành công nhưng lưu phiếu kết ca thất bại!\nVui lòng liên hệ admin.')
+      console.error('Save shift report error:', err)
+    }
 
     // Reset invoices data and tables
-    console.log('Calling resetInvoices...')
     invoicesStore.resetInvoices()
-    console.log('Last shift end after reset:', invoicesStore.lastShiftEnd)
-    console.log('LocalStorage lastShiftEnd:', localStorage.getItem('lastShiftEnd'))
     tablesStore.resetTables()
 
     // Auto logout after export
     setTimeout(() => {
       logoutAfterExport()
-    }, 1500)
+    }, 2000)
   } catch (err) {
     console.error('Error exporting PDF:', err)
-    alert('Có lỗi khi xuất PDF. Vui lòng thử lại.')
+    alert('❌ Có lỗi khi xuất PDF. Vui lòng thử lại.')
   } finally {
     isExporting.value = false
   }
