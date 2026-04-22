@@ -13,7 +13,6 @@ export class ProductService {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('is_active', true)
       .order('name')
 
     if (error) {
@@ -60,7 +59,14 @@ export class ProductService {
   /**
    * Tạo sản phẩm mới
    */
-  static async create(productData: Omit<Product, 'id' | 'createdAt'>): Promise<Product> {
+  static async create(productData: {
+    name: string
+    price: number
+    imageUrl: string
+    isAvailable: boolean
+    category: ProductCategory
+    isActive: boolean
+  }): Promise<Product> {
     const { data, error } = await supabase
       .from('products')
       .insert({
@@ -68,8 +74,7 @@ export class ProductService {
         price: productData.price,
         image_url: productData.imageUrl,
         is_available: productData.isAvailable,
-        category: productData.category,
-        is_active: productData.isActive
+        category: productData.category
       })
       .select()
       .single()
@@ -92,7 +97,6 @@ export class ProductService {
     if (updates.imageUrl !== undefined) updateData.image_url = updates.imageUrl
     if (updates.isAvailable !== undefined) updateData.is_available = updates.isAvailable
     if (updates.category !== undefined) updateData.category = updates.category
-    if (updates.isActive !== undefined) updateData.is_active = updates.isActive
 
     const { data, error } = await supabase
       .from('products')
@@ -109,12 +113,12 @@ export class ProductService {
   }
 
   /**
-   * Xóa sản phẩm (soft delete)
+   * Xóa sản phẩm (soft delete - set is_available to false)
    */
   static async delete(id: number): Promise<void> {
     const { error } = await supabase
       .from('products')
-      .update({ is_active: false })
+      .update({ is_available: false })
       .eq('id', id)
 
     if (error) {

@@ -14,7 +14,7 @@
         Tất cả
       </button>
       <button
-        v-for="cat in productsStore.PRODUCT_CATEGORIES"
+        v-for="cat in PRODUCT_CATEGORIES"
         :key="cat.value"
         @click="selectedCategory = cat.value"
         :class="[
@@ -75,7 +75,7 @@
             <tr v-for="product in filteredProducts" :key="product.id">
               <td>
                 <img 
-                  :src="product.image_url || '/placeholder-product.png'" 
+                  :src="product.imageUrl || '/placeholder-product.png'" 
                   :alt="product.name"
                   class="w-16 h-16 object-cover rounded-lg"
                 />
@@ -83,13 +83,13 @@
               <td class="font-medium">{{ product.name }}</td>
               <td>
                 <span class="px-2 py-1 bg-gray-100 rounded text-sm">
-                  {{ productsStore.PRODUCT_CATEGORIES.find(c => c.value === product.category)?.label || product.category }}
+                  {{ PRODUCT_CATEGORIES.find((c) => c.value === product.category)?.label || product.category }}
                 </span>
               </td>
               <td>{{ formatCurrency(product.price) }}</td>
               <td>
-                <span :class="product.is_available ? 'badge-success' : 'badge-danger'">
-                  {{ product.is_available ? 'Có sẵn' : 'Hết hàng' }}
+                <span :class="product.isAvailable ? 'badge-success' : 'badge-danger'">
+                  {{ product.isAvailable ? 'Có sẵn' : 'Hết hàng' }}
                 </span>
               </td>
               <td>
@@ -143,7 +143,7 @@
         <div>
           <label class="label">Danh mục</label>
           <select v-model="form.category" class="input w-full" required>
-            <option v-for="cat in productsStore.PRODUCT_CATEGORIES" :key="cat.value" :value="cat.value">
+            <option v-for="cat in PRODUCT_CATEGORIES" :key="cat.value" :value="cat.value">
               {{ cat.label }}
             </option>
           </select>
@@ -151,17 +151,17 @@
 
         <div>
           <label class="label">URL Hình ảnh</label>
-          <input v-model="form.image_url" type="text" class="input" placeholder="https://..." />
+          <input v-model="form.imageUrl" type="text" class="input" placeholder="https://..." />
         </div>
 
         <div class="flex items-center space-x-2">
           <input
-            v-model="form.is_available"
+            v-model="form.isAvailable"
             type="checkbox"
-            id="is_available"
+            id="isAvailable"
             class="w-4 h-4 rounded border-gray-300 text-coffee-600 focus:ring-coffee-500"
           />
-          <label for="is_available" class="text-sm text-gray-700">Có sẵn</label>
+          <label for="isAvailable" class="text-sm text-gray-700">Có sẵn</label>
         </div>
         
         <div class="flex justify-end space-x-3 pt-4">
@@ -187,11 +187,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useProductsStore, type Product, type ProductCategory } from '@/stores/products'
+import { useProductStore } from '@/stores/productStore'
+import { Product, type ProductCategory, PRODUCT_CATEGORIES } from '@/models'
 import ModalDialog from '@/components/common/ModalDialog.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
-const productsStore = useProductsStore()
+const productsStore = useProductStore()
 
 const searchQuery = ref('')
 const filterStatus = ref<'all' | 'available' | 'unavailable'>('all')
@@ -201,12 +202,22 @@ const isDeleteDialogOpen = ref(false)
 const editingProduct = ref<Product | null>(null)
 const productToDelete = ref<Product | null>(null)
 
-const form = ref({
+interface ProductFormData {
+  name: string
+  price: number
+  imageUrl: string
+  isAvailable: boolean
+  category: ProductCategory
+  isActive: boolean
+}
+
+const form = ref<ProductFormData>({
   name: '',
   price: 0,
-  image_url: '',
-  is_available: true,
-  category: 'cafe' as ProductCategory
+  imageUrl: '',
+  isAvailable: true,
+  category: 'cafe',
+  isActive: true
 })
 
 const filteredProducts = computed(() => {
@@ -214,18 +225,18 @@ const filteredProducts = computed(() => {
   
   // Filter by category
   if (selectedCategory.value !== 'all') {
-    result = result.filter(p => p.category === selectedCategory.value)
+    result = result.filter((p: Product) => p.category === selectedCategory.value)
   }
   
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    result = result.filter(p => p.name.toLowerCase().includes(query))
+    result = result.filter((p: Product) => p.name.toLowerCase().includes(query))
   }
   
   if (filterStatus.value === 'available') {
-    result = result.filter(p => p.is_available)
+    result = result.filter((p: Product) => p.isAvailable)
   } else if (filterStatus.value === 'unavailable') {
-    result = result.filter(p => !p.is_available)
+    result = result.filter((p: Product) => !p.isAvailable)
   }
   
   return result
@@ -243,9 +254,10 @@ const openAddModal = () => {
   form.value = {
     name: '',
     price: 0,
-    image_url: '',
-    is_available: true,
-    category: 'cafe'
+    imageUrl: '',
+    isAvailable: true,
+    category: 'cafe',
+    isActive: true
   }
   isModalOpen.value = true
 }
@@ -255,9 +267,10 @@ const editProduct = (product: Product) => {
   form.value = {
     name: product.name,
     price: product.price,
-    image_url: product.image_url || '',
-    is_available: product.is_available,
-    category: product.category
+    imageUrl: product.imageUrl || '',
+    isAvailable: product.isAvailable,
+    category: product.category,
+    isActive: product.isActive
   }
   isModalOpen.value = true
 }
@@ -290,6 +303,9 @@ const deleteProduct = async () => {
 }
 
 onMounted(() => {
+  console.log('📦 Loading products...')
   productsStore.loadProducts()
+  console.log('📦 Products loaded:', productsStore.products)
+  console.log('📦 Filtered products:', filteredProducts.value)
 })
 </script>

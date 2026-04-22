@@ -46,7 +46,7 @@
           Tất cả
         </button>
         <button
-          v-for="cat in productsStore.PRODUCT_CATEGORIES"
+          v-for="cat in PRODUCT_CATEGORIES"
           :key="cat.value"
           @click="selectedCategory = cat.value"
           :class="[
@@ -67,11 +67,11 @@
             v-for="product in filteredProducts"
             :key="product.id"
             @click="addToCart(product)"
-            :disabled="!product.is_available"
+            :disabled="!product.isAvailable"
             class="card p-4 text-left transition-all hover:shadow-md hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             <img 
-              :src="product.image_url || '/placeholder-product.png'" 
+              :src="product.imageUrl || '/placeholder-product.png'" 
               :alt="product.name"
               class="w-full h-32 object-cover rounded-lg mb-3"
             />
@@ -107,19 +107,19 @@
             class="flex items-center space-x-3 p-2 bg-white rounded-lg"
           >
             <img 
-              :src="item.product?.image_url || '/placeholder-product.png'" 
+              :src="item.product?.imageUrl || '/placeholder-product.png'" 
               class="w-10 h-10 object-cover rounded-lg"
             />
             <div class="flex-1 min-w-0">
               <p class="font-medium text-sm text-gray-900 truncate">{{ item.product?.name }}</p>
-              <p class="text-gray-500 text-xs">{{ item.quantity }} x {{ formatCurrency(item.unit_price) }}</p>
+              <p class="text-gray-500 text-xs">{{ item.quantity }} x {{ formatCurrency(item.unitPrice) }}</p>
             </div>
-            <p class="text-blue-600 font-semibold text-sm">{{ formatCurrency(item.subtotal || item.quantity * item.unit_price) }}</p>
+            <p class="text-blue-600 font-semibold text-sm">{{ formatCurrency(item.subtotal || item.quantity * item.unitPrice) }}</p>
           </div>
         </div>
         <div class="mt-2 pt-2 border-t border-blue-200 flex justify-between text-sm">
           <span class="text-blue-600">Tổng hóa đơn cũ:</span>
-          <span class="font-bold text-blue-700">{{ formatCurrency(existingInvoice.total_amount) }}</span>
+          <span class="font-bold text-blue-700">{{ formatCurrency(existingInvoice.totalAmount) }}</span>
         </div>
       </div>
 
@@ -143,7 +143,7 @@
           class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-100"
         >
           <img 
-            :src="item.product.image_url || '/placeholder-product.png'" 
+            :src="item.product.imageUrl || '/placeholder-product.png'" 
             class="w-14 h-14 object-cover rounded-lg"
           />
           <div class="flex-1 min-w-0">
@@ -203,7 +203,7 @@
               <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              Thêm vào hóa đơn ({{ formatCurrency(existingInvoice?.total_amount || 0) }})
+              Thêm vào hóa đơn ({{ formatCurrency(existingInvoice?.totalAmount || 0) }})
             </span>
           </button>
           
@@ -336,18 +336,19 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useProductsStore, type Product, type ProductCategory } from '@/stores/products'
+import { useProductStore } from '@/stores/productStore'
 import { useTablesStore } from '@/stores/tables'
 import { useInvoicesStore } from '@/stores/invoices'
 import { useAuthStore } from '@/stores/auth'
 import { useVouchersStore, type Voucher } from '@/stores/vouchers'
+import { Product, type ProductCategory, PRODUCT_CATEGORIES } from '@/models'
 import { supabase } from '@/lib/supabaseClient'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import ModalDialog from '@/components/common/ModalDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
-const productsStore = useProductsStore()
+const productsStore = useProductStore()
 const tablesStore = useTablesStore()
 const invoicesStore = useInvoicesStore()
 const authStore = useAuthStore()
@@ -383,13 +384,16 @@ const filteredProducts = computed(() => {
   
   // Filter by category
   if (selectedCategory.value !== 'all') {
-    result = result.filter(p => p.category === selectedCategory.value)
+    result = result.filter((p: Product) => p.category === selectedCategory.value)
   }
   
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    result = result.filter(p => p.name.toLowerCase().includes(query))
+    result = result.filter((p: Product) => p.name.toLowerCase().includes(query))
   }
+  
+  // Only show available products
+  result = result.filter((p: Product) => p.isAvailable)
   
   return result
 })
