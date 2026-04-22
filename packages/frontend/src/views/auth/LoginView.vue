@@ -21,12 +21,17 @@
           <div>
             <label class="label">Email</label>
             <input
+              ref="emailInput"
               v-model="email"
               type="email"
               class="input"
               placeholder="Nhập email"
               required
+              @invalid="handleEmailInvalid"
             />
+            <div v-if="emailError" class="mt-2 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+              {{ emailError }}
+            </div>
           </div>
           
           <div>
@@ -38,10 +43,9 @@
               placeholder="Nhập mật khẩu"
               required
             />
-          </div>
-          
-          <div v-if="authStore.error" class="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
-            {{ authStore.error }}
+            <div v-if="authStore.error" class="mt-2 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+              {{ authStore.error }}
+            </div>
           </div>
           
           <button
@@ -57,10 +61,9 @@
       
       <!-- Demo accounts info -->
       <div class="mt-6 text-center">
-        <p class="text-sm text-gray-500 mb-2">Tài khoản demo:</p>
+       
         <div class="space-y-1 text-xs text-gray-400">
-          <p>Admin: admin@coffee.com / admin123</p>
-          <p>Nhân viên: staff@coffee.com / staff123</p>
+          
         </div>
       </div>
     </div>
@@ -78,8 +81,36 @@ const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
+const emailInput = ref<HTMLInputElement>()
+const emailError = ref('')
+
+const handleEmailInvalid = (event: Event) => {
+  event.preventDefault()
+  const input = event.target as HTMLInputElement
+  
+  if (!input.value) {
+    emailError.value = 'Vui lòng nhập email'
+  } else if (!input.validity.valid) {
+    emailError.value = 'Email không đúng định dạng. Vui lòng nhập email hợp lệ'
+  }
+}
 
 const handleLogin = async () => {
+  // Clear previous email error
+  emailError.value = ''
+  
+  // Validate email format
+  if (!email.value) {
+    emailError.value = 'Vui lòng nhập email'
+    return
+  }
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email.value)) {
+    emailError.value = 'Email không đúng định dạng. Vui lòng nhập email hợp lệ'
+    return
+  }
+  
   const success = await authStore.signIn(email.value, password.value)
   
   if (success) {

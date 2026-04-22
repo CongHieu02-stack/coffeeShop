@@ -218,7 +218,7 @@
               <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z" />
               </svg>
-              Thanh toán hóa đơn ({{ formatCurrency((existingInvoice?.total_amount || 0) + total) }})
+              Thanh toán hóa đơn ({{ formatCurrency((finalTotal) ) }})
             </span>
           </button>
         </div>
@@ -634,36 +634,44 @@ const processPayment = async (paymentMethod: 'cash' | 'transfer') => {
   }
   
   // Pay the invoice
-  if (!invoiceId) {
-    alert('Lỗi: Không tìm thấy hóa đơn')
-    isProcessing.value = false
-    return
-  }
-  
-  const success = await invoicesStore.payInvoice(invoiceId, paymentMethod)
-  
-  if (success) {
-    // Calculate final amount before reset
-    const invoiceTotal = existingInvoice.value ? existingInvoice.value.total_amount : 0
-    const finalAmount = invoiceTotal + total.value
-    
-    // Clear cart and close modal
-    cart.value = []
-    isPaymentModalOpen.value = false
-    isProcessing.value = false
-    existingInvoice.value = null
-    
-    // Update table status to empty
-    await tablesStore.updateTableStatus(tableId.value, false)
-    
-    alert(`Thanh toán thành công!\nPhương thức: ${paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}\nTổng tiền: ${formatCurrency(finalAmount)}`)
-    
-    // Go back to table selection
-    router.push('/client')
-  } else {
-    alert('Lỗi: Không thể thanh toán hóa đơn')
-    isProcessing.value = false
-  }
+  // Pay the invoice
+if (!invoiceId) {
+  alert('Lỗi: Không tìm thấy hóa đơn')
+  isProcessing.value = false
+  return
+}
+
+// ✅ update total đúng (đã trừ voucher)
+await invoicesStore.updateInvoice(invoiceId, {
+  total_amount: finalTotal.value
+})
+
+const success = await invoicesStore.payInvoice(invoiceId, paymentMethod)
+
+if (success) {
+  const finalAmount = finalTotal.value
+
+  cart.value = []
+  isPaymentModalOpen.value = false
+  isProcessing.value = false
+  existingInvoice.value = null
+
+  // reset voucher
+  appliedVoucher.value = null
+  discountAmount.value = 0
+  voucherCode.value = ''
+
+  await tablesStore.updateTableStatus(tableId.value, false)
+
+  alert(`Thanh toán thành công!
+Phương thức: ${paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}
+Tổng tiền: ${formatCurrency(finalAmount)}`)
+
+  router.push('/client')
+} else {
+  alert('Lỗi: Không thể thanh toán hóa đơn')
+  isProcessing.value = false
+}
 }
 
 const loadExistingInvoice = async () => {

@@ -158,7 +158,7 @@ export const useAuthStore = defineStore('auth', () => {
       })
 
       if (signInError) {
-        error.value = signInError.message
+        error.value = 'Sai tài khoản hoặc mật khẩu'
         return false
       }
 

@@ -252,7 +252,7 @@ const formatCurrency = (amount: number) => {
   }).format(amount)
 }
 
-const formatTime = (dateString: string | null) => {
+const formatTime = (dateString: string | null|undefined) => {
   if (!dateString) return '-'
   return new Date(dateString).toLocaleTimeString('vi-VN', {
     hour: '2-digit',
