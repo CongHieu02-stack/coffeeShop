@@ -107,7 +107,8 @@
             class="flex items-center space-x-3 p-2 bg-white rounded-lg"
           >
             <img 
-              :src="item.product?.imageUrl || '/placeholder-product.png'" 
+              :src="item.product?.imageUrl || '/placeholder-product.png'"
+              :alt="item.product?.name || 'Sản phẩm'"
               class="w-10 h-10 object-cover rounded-lg"
             />
             <div class="flex-1 min-w-0">
@@ -144,6 +145,7 @@
         >
           <img 
             :src="item.product.imageUrl || '/placeholder-product.png'" 
+            :alt="item.product.name"
             class="w-14 h-14 object-cover rounded-lg"
           />
           <div class="flex-1 min-w-0">
@@ -264,7 +266,7 @@
               type="text" 
               placeholder="Nhập mã voucher..."
               class="flex-1 input text-sm"
-              :disabled="isApplyingVoucher || appliedVoucher"
+              :disabled="isApplyingVoucher || !!appliedVoucher"
             />
             <button 
               v-if="!appliedVoucher"
@@ -379,7 +381,7 @@ const isApplyingVoucher = ref(false)
 const voucherError = ref('')
 const discountAmount = ref(0)
 
-let timeInterval: number | null = null
+let timeInterval: number | NodeJS.Timeout | null = null
 
 const filteredProducts = computed(() => {
   let result = productsStore.availableProducts
@@ -490,9 +492,7 @@ const goBack = async () => {
       staff_id: authStore.user.id,
       table_id: tableId.value,
       total_amount: finalTotal.value,
-      payment_method: null,
-      status: 'pending',
-      paid_at: null
+      status: 'pending'
     }, items)
     
     if (invoice) {
@@ -625,9 +625,7 @@ const processPayment = async (paymentMethod: 'cash' | 'transfer') => {
       staff_id: authStore.user.id,
       table_id: tableId.value,
       total_amount: finalTotal.value,
-      payment_method: null,
-      status: 'pending',
-      paid_at: null
+      status: 'pending'
     }, items)
     
     if (!invoice) {
@@ -719,7 +717,7 @@ onMounted(() => {
     }
   })
   updateTime()
-  timeInterval = window.setInterval(updateTime, 1000)
+  timeInterval = globalThis.setInterval(updateTime, 1000)
 })
 
 onUnmounted(() => {
