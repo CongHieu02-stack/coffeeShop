@@ -13,6 +13,7 @@ export class ProductService {
     const { data, error } = await supabase
       .from('products')
       .select('*')
+      .eq('is_available', true)
       .order('name')
 
     if (error) {
