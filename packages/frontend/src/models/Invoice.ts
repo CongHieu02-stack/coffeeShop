@@ -61,6 +61,7 @@ export class Invoice {
   items: InvoiceItem[]
   staffName?: string
   tableName?: string
+  note?: string
 
   constructor(data: {
     id: string
@@ -74,6 +75,7 @@ export class Invoice {
     items?: InvoiceItem[]
     staff_name?: string
     table_name?: string
+    note?: string
   }) {
     this.id = data.id
     this.staffId = data.staff_id
@@ -86,6 +88,7 @@ export class Invoice {
     this.items = data.items || []
     this.staffName = data.staff_name
     this.tableName = data.table_name
+    this.note = data.note
   }
 
   /**
@@ -155,7 +158,8 @@ export class Invoice {
       created_at: data.created_at as string,
       items,
       staff_name: data.staff_name as string,
-      table_name: data.table_name as string
+      table_name: data.table_name as string,
+      note: data.note as string
     })
   }
 }

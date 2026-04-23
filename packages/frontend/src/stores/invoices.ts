@@ -25,6 +25,7 @@ export interface Invoice {
   paid_at?: string
   created_at: string
   items?: InvoiceItem[]
+  note?: string
 }
 
 export interface LoadInvoicesParams {
@@ -39,14 +40,14 @@ export const useInvoicesStore = defineStore('invoices', () => {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const lastShiftEnd = ref<string | null>(localStorage.getItem('lastShiftEnd'))
-// 2. Khai báo actions
+  // 2. Khai báo actions
   const resetInvoices = () => {
     invoices.value = [] // Xóa danh sách hóa đơn hiện tại
     const now = new Date().toISOString()
     lastShiftEnd.value = now
     localStorage.setItem('lastShiftEnd', now) // Lưu thời điểm kết ca
   }
-  
+
   // ================= LOAD =================
   const loadInvoices = async (params?: LoadInvoicesParams) => {
     isLoading.value = true
@@ -102,8 +103,8 @@ export const useInvoicesStore = defineStore('invoices', () => {
   }
 
   const paidInvoices = computed(() => {
-  return invoices.value.filter(i => i.status === 'paid')
-})
+    return invoices.value.filter(i => i.status === 'paid')
+  })
 
   // ================= UPDATE =================
   const updateInvoice = async (id: string, updates: Partial<Invoice>) => {
@@ -117,7 +118,8 @@ export const useInvoicesStore = defineStore('invoices', () => {
         total_amount: updates.total_amount,
         payment_method: updates.payment_method,
         status: updates.status,
-        paid_at: updates.paid_at
+        paid_at: updates.paid_at,
+        note: updates.note
       }
 
       // 🔥 FIX: loại luôn null + undefined
@@ -173,49 +175,49 @@ export const useInvoicesStore = defineStore('invoices', () => {
     return result !== null
   }
   const createInvoice = async (
-  invoiceData: Partial<Invoice>,
-  items: {
-    product_id: string | number
-    quantity: number
-    unit_price: number
-  }[]
-) => {
-  try {
-    // 1. Tạo invoice
-    const { data: invoice, error: invoiceError } = await supabase
-      .from('invoices')
-      .insert([invoiceData])
-      .select()
-      .single()
+    invoiceData: Partial<Invoice>,
+    items: {
+      product_id: string | number
+      quantity: number
+      unit_price: number
+    }[]
+  ) => {
+    try {
+      // 1. Tạo invoice
+      const { data: invoice, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert([invoiceData])
+        .select()
+        .single()
 
-    if (invoiceError) {
-      console.error('Create invoice error:', invoiceError)
-      throw invoiceError
-    }
-
-    // 2. Tạo invoice_items
-    if (items.length > 0) {
-      const { error: itemsError } = await supabase
-        .from('invoice_items')
-        .insert(
-          items.map(item => ({
-            ...item,
-            invoice_id: invoice.id
-          }))
-        )
-
-      if (itemsError) {
-        console.error('Create invoice items error:', itemsError)
-        throw itemsError
+      if (invoiceError) {
+        console.error('Create invoice error:', invoiceError)
+        throw invoiceError
       }
-    }
 
-    return invoice
-  } catch (err) {
-    console.error('createInvoice failed:', err)
-    return null
+      // 2. Tạo invoice_items
+      if (items.length > 0) {
+        const { error: itemsError } = await supabase
+          .from('invoice_items')
+          .insert(
+            items.map(item => ({
+              ...item,
+              invoice_id: invoice.id
+            }))
+          )
+
+        if (itemsError) {
+          console.error('Create invoice items error:', itemsError)
+          throw itemsError
+        }
+      }
+
+      return invoice
+    } catch (err) {
+      console.error('createInvoice failed:', err)
+      return null
+    }
   }
-}
 
 
   // ================= REPORT =================
@@ -248,7 +250,7 @@ export const useInvoicesStore = defineStore('invoices', () => {
       transfer,
       count: filtered.length
     }
-    
+
   }
 
   // ================= GETTERS =================
@@ -262,19 +264,19 @@ export const useInvoicesStore = defineStore('invoices', () => {
 
   // ================= EXPORT =================
   return {
-  invoices,
-  isLoading,
-  error,
-  todayInvoices,
-  paidInvoices,
-  lastShiftEnd,
-  resetInvoices,
+    invoices,
+    isLoading,
+    error,
+    todayInvoices,
+    paidInvoices,
+    lastShiftEnd,
+    resetInvoices,
 
-  loadInvoices,
-  updateInvoice,
-  payInvoice,
-  getRevenueSummary,
-  createInvoice, // 👈 THÊM DÒNG NÀY
- 
-}
+    loadInvoices,
+    updateInvoice,
+    payInvoice,
+    getRevenueSummary,
+    createInvoice, // 👈 THÊM DÒNG NÀY
+
+  }
 })
