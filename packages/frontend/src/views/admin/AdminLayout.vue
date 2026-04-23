@@ -26,7 +26,7 @@
         'bg-white border-r border-gray-200 flex-shrink-0 h-screen flex flex-col z-50 transition-transform duration-300 ease-in-out',
         'fixed left-0 top-0 bottom-0 w-64 transform',
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
-        'lg:translate-x-0 lg:static lg:top-0'
+        'lg:translate-x-0 lg:fixed lg:top-0'
       ]"
     >
       <!-- Logo -->
@@ -86,7 +86,7 @@
     </aside>
     
     <!-- Main content -->
-    <main class="flex-1 overflow-hidden flex flex-col">
+    <main class="flex-1 overflow-hidden flex flex-col lg:ml-64">
       <!-- Header -->
       <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8">
         <h1 class="text-lg lg:text-xl font-semibold text-gray-900">{{ pageTitle }}</h1>

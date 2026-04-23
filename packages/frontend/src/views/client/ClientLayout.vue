@@ -26,7 +26,7 @@
         'bg-white border-r border-gray-200 flex-shrink-0 h-screen flex flex-col z-50 transition-transform duration-300 ease-in-out',
         'fixed left-0 top-0 bottom-0 w-64 transform',
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
-        'lg:translate-x-0 lg:static lg:top-0'
+        'lg:translate-x-0 lg:fixed lg:top-0'
       ]"
     >
       <!-- Logo -->
@@ -105,7 +105,7 @@
     </aside>
     
     <!-- Main content -->
-    <main class="flex-1 overflow-hidden flex flex-col">
+    <main class="flex-1 overflow-hidden flex flex-col lg:ml-64">
       <div class="flex-1 overflow-auto p-4 lg:p-8 pt-16 lg:pt-8">
         <router-view />
       </div>
