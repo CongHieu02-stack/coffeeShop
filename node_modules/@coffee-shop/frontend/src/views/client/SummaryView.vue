@@ -113,6 +113,7 @@
               <th>Tổng tiền</th>
               <th>Phương thức</th>
               <th>Thời gian</th>
+              <th>Chi tiết</th>
             </tr>
           </thead>
           <tbody>
@@ -126,6 +127,18 @@
                 <span v-else class="text-gray-400">-</span>
               </td>
               <td class="text-gray-500">{{ formatTime(invoice.paid_at || invoice.created_at) }}</td>
+              <td>
+                <button 
+                  @click="viewInvoiceDetails(invoice)"
+                  class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Xem chi tiết"
+                >
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -140,6 +153,72 @@
         </svg>
       </div>
       <p class="text-gray-500">Chưa có hóa đơn nào trong ngày này</p>
+    </div>
+
+    <!-- Invoice Details Modal -->
+    <div v-if="selectedInvoice" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click="closeInvoiceDetails">
+      <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto m-4" @click.stop>
+        <div class="p-6 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xl font-bold text-gray-900">Chi tiết hóa đơn</h3>
+            <button @click="closeInvoiceDetails" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span class="text-gray-500">Mã hóa đơn:</span>
+              <span class="font-mono ml-2">{{ selectedInvoice.id.slice(0, 8) }}...</span>
+            </div>
+            <div>
+              <span class="text-gray-500">Bàn:</span>
+              <span class="font-medium ml-2">{{ selectedInvoice.table_name || selectedInvoice.table_id }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500">Phương thức:</span>
+              <span class="font-medium ml-2">
+                {{ selectedInvoice.payment_method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản' }}
+              </span>
+            </div>
+            <div>
+              <span class="text-gray-500">Thời gian:</span>
+              <span class="font-medium ml-2">{{ formatTime(selectedInvoice.paid_at || selectedInvoice.created_at) }}</span>
+            </div>
+          </div>
+          <div v-if="selectedInvoice.note" class="mt-3 p-3 bg-blue-50 rounded-lg">
+            <span class="text-sm text-blue-700 font-medium">Ghi chú:</span>
+            <p class="text-sm text-blue-600 mt-1">{{ selectedInvoice.note }}</p>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <h4 class="font-semibold text-gray-900 mb-4">Danh sách món</h4>
+          <div v-if="loadingInvoiceItems" class="text-center py-8">
+            <p class="text-gray-500">Đang tải...</p>
+          </div>
+          <div v-else-if="invoiceItems.length > 0" class="space-y-3">
+            <div v-for="item in invoiceItems" :key="item.id" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <p class="font-medium text-gray-900">{{ item.product_name || 'Sản phẩm' }}</p>
+                <p class="text-sm text-gray-500">{{ item.quantity }} x {{ formatCurrency(item.unit_price) }}</p>
+              </div>
+              <p class="font-semibold text-coffee-600">{{ formatCurrency(item.subtotal || item.quantity * item.unit_price) }}</p>
+            </div>
+          </div>
+          <div v-else class="text-center py-8 text-gray-500">
+            Không có chi tiết món
+          </div>
+        </div>
+
+        <div class="p-6 border-t border-gray-200 bg-gray-50">
+          <div class="flex justify-between items-center">
+            <span class="text-lg font-semibold text-gray-900">Tổng cộng:</span>
+            <span class="text-2xl font-bold text-coffee-600">{{ formatCurrency(selectedInvoice.total_amount) }}</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -157,6 +236,9 @@ const { success, error: showError } = useToast()
 const selectedDate = ref('')
 const todayInvoices = ref<Invoice[]>([])
 const isEndingShift = ref(false)
+const selectedInvoice = ref<Invoice | null>(null)
+const invoiceItems = ref<any[]>([])
+const loadingInvoiceItems = ref(false)
 
 // Import supabase for API call
 import { supabase } from '@/lib/supabaseClient'
@@ -278,7 +360,7 @@ const endShift = async () => {
   
   try {
     // Create shift report via Supabase
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('shift_reports')
       .insert({
         staff_id: authStore.user.id,
@@ -307,6 +389,36 @@ const endShift = async () => {
   } finally {
     isEndingShift.value = false
   }
+}
+
+const viewInvoiceDetails = async (invoice: Invoice) => {
+  selectedInvoice.value = invoice
+  loadingInvoiceItems.value = true
+  invoiceItems.value = []
+
+  try {
+    const { data, error } = await supabase
+      .from('invoice_items')
+      .select(`
+        *,
+        product:products(name)
+      `)
+      .eq('invoice_id', invoice.id)
+
+    if (error) throw error
+
+    invoiceItems.value = data || []
+  } catch (err: any) {
+    console.error('Error loading invoice items:', err)
+    showError('Lỗi', 'Không thể tải chi tiết hóa đơn')
+  } finally {
+    loadingInvoiceItems.value = false
+  }
+}
+
+const closeInvoiceDetails = () => {
+  selectedInvoice.value = null
+  invoiceItems.value = []
 }
 
 onMounted(() => {
