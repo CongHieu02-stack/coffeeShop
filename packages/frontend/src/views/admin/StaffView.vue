@@ -81,16 +81,6 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </button>
-                  <!-- Delete button -->
-                  <button 
-                    @click="confirmDelete(member)"
-                    class="p-2 rounded-lg transition-colors text-red-600 hover:bg-red-50"
-                    title="Xóa"
-                  >
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
                 </div>
               </td>
             </tr>
@@ -176,36 +166,6 @@
           </button>
         </div>
       </form>
-    </ModalDialog>
-
-    <!-- Delete Confirmation Modal -->
-    <ModalDialog
-      :is-open="isDeleteModalOpen"
-      title="Xác nhận xóa"
-      @close="closeDeleteModal"
-    >
-      <div class="space-y-4">
-        <p class="text-gray-700">
-          Bạn có chắc chắn muốn xóa nhân viên <strong>{{ staffToDelete?.full_name }}</strong>?
-        </p>
-        <p class="text-red-600 text-sm">Hành động này không thể hoàn tác.</p>
-        
-        <div v-if="staffStore.error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {{ staffStore.error }}
-        </div>
-        
-        <div class="flex justify-end space-x-3 pt-4">
-          <button type="button" @click="closeDeleteModal" class="btn-secondary">Hủy</button>
-          <button 
-            type="button" 
-            @click="deleteStaff" 
-            class="btn-danger bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
-            :disabled="staffStore.isLoading"
-          >
-            Xóa
-          </button>
-        </div>
-      </div>
     </ModalDialog>
   </div>
 </template>
@@ -306,32 +266,6 @@ const updateStaff = async () => {
   
   if (success) {
     closeEditModal()
-  }
-}
-
-// Delete modal state
-const isDeleteModalOpen = ref(false)
-const staffToDelete = ref<StaffMember | null>(null)
-
-const confirmDelete = (member: StaffMember) => {
-  staffToDelete.value = member
-  isDeleteModalOpen.value = true
-  staffStore.error = null
-}
-
-const closeDeleteModal = () => {
-  isDeleteModalOpen.value = false
-  staffToDelete.value = null
-  staffStore.error = null
-}
-
-const deleteStaff = async () => {
-  if (!staffToDelete.value) return
-  
-  const success = await staffStore.deleteStaff(staffToDelete.value.id)
-  
-  if (success) {
-    closeDeleteModal()
   }
 }
 

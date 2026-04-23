@@ -299,28 +299,10 @@ const resetDailySummary = () => {
 
 const loadSummary = async () => {
   if (!selectedDate.value || !authStore.user) return
-  
+
   console.log('Loading summary for user:', authStore.user.id, authStore.user)
-  
-  // Format: YYYY-MM-DD 00:00:00 to YYYY-MM-DD 23:59:59
-  const startDate = selectedDate.value + 'T00:00:00.000Z'
-  const endDate = selectedDate.value + 'T23:59:59.999Z'
-  
-  console.log('Date range:', { startDate, endDate })
-  
-  await invoicesStore.loadInvoices({
-    // Temporarily remove staff filter to test
-    // staffId: authStore.user.id,
-    startDate,
-    endDate
-  })
-  
-  console.log('All invoices loaded:', invoicesStore.invoices)
-  console.log('Paid invoices:', invoicesStore.paidInvoices)
-  
-  // Show all paid invoices for now (remove staff filter)
-  // Filter: only show invoices after last shift end
-  // Fallback: read directly from localStorage if store doesn't have it
+
+  // Get last shift end time
   let lastShift = invoicesStore.lastShiftEnd
   if (!lastShift) {
     const saved = localStorage.getItem('lastShiftEnd')
@@ -330,22 +312,26 @@ const loadSummary = async () => {
     }
   }
   console.log('Last shift end:', lastShift)
-  
-  if (lastShift) {
-    const shiftTime = new Date(lastShift).getTime()
-    console.log('Filtering invoices after:', new Date(lastShift).toLocaleString())
-    todayInvoices.value = invoicesStore.paidInvoices.filter(i => {
-      if (!i.paid_at) return false
-      const paidTime = new Date(i.paid_at).getTime()
-      const shouldShow = paidTime > shiftTime
-      console.log('Invoice paid_at:', i.paid_at, 'paidTime:', paidTime, 'shiftTime:', shiftTime, 'Show:', shouldShow)
-      return shouldShow
-    })
-  } else {
-    console.log('No last shift end, showing all invoices')
-    todayInvoices.value = invoicesStore.paidInvoices
-  }
-  
+
+  // Use lastShiftEnd as startDate to prevent accumulation
+  // If no lastShiftEnd, use start of selected date
+  const startDate = lastShift ? lastShift : (selectedDate.value + 'T00:00:00.000Z')
+  const endDate = selectedDate.value + 'T23:59:59.999Z'
+
+  console.log('Date range:', { startDate, endDate })
+
+  await invoicesStore.loadInvoices({
+    staffId: authStore.user.id,
+    startDate,
+    endDate
+  })
+
+  console.log('All invoices loaded:', invoicesStore.invoices)
+  console.log('Paid invoices:', invoicesStore.paidInvoices)
+
+  // Show all paid invoices (already filtered by date range)
+  todayInvoices.value = invoicesStore.paidInvoices
+
   console.log('Filtered today invoices:', todayInvoices.value.length)
 }
 
