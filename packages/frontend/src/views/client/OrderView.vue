@@ -3,40 +3,25 @@
   <div class="h-[calc(100vh-140px)] flex gap-6">
 
     <!-- Products Panel -->
-
-
     <div class="flex-1 flex flex-col">
-
 
       <!-- Header -->
 
-
       <div class="flex items-center justify-between mb-4">
-
 
         <div class="flex items-center space-x-4">
 
-
           <button 
-
 
             @click="goBack"
 
-
             class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-
-
           >
-
-
             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-
 
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
 
-
             </svg>
-
 
           </button>
 
@@ -201,9 +186,8 @@
           >
 
 
-            <img 
-
-              :src="product.image_url || '/placeholder-product.png'" 
+            <img
+:src="product.image_url || '/placeholder-product.png'" 
 
               :alt="product.name"
 
@@ -248,449 +232,153 @@
     
 
     <!-- Cart Panel -->
+<div class="w-96 card flex flex-col shadow-lg h-[calc(100vh-140px)]">
 
-    <div class="w-96 card flex flex-col shadow-lg">
-
-      <div class="p-4 border-b border-gray-100 bg-coffee-50">
-
-
+      <div class="p-4 border-b border-gray-100 bg-coffee-50 shrink-0">
         <h3 class="text-lg font-semibold text-coffee-900 flex items-center">
-
-
           <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-
-
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-
-
           </svg>
-
-
           Hóa đơn - Bàn {{ tableName }}
-
-
         </h3>
-
-
       </div>
 
-      
-
-      
-
-      <!-- Existing Invoice Items -->
-
-
-      <div v-if="existingInvoice?.items?.length" class="p-4 border-b border-gray-100 bg-blue-50">
-
-
-        <p class="text-sm font-medium text-blue-700 mb-2">Hóa đơn hiện tại:</p>
-
-
-        <div class="space-y-2">
-
-
-          <div 
-
-
-            v-for="item in existingInvoice.items" 
-
-
-            :key="item.id"
-
-
-            class="flex items-center space-x-3 p-2 bg-white rounded-lg"
-
-
-          >
-
-
-            <img 
-
-              :src="item.product?.image_url || '/placeholder-product.png'" 
-
-              class="w-10 h-10 object-cover rounded-lg"
-
-
-            />
-
-
-            <div class="flex-1 min-w-0">
-
-
-              <p class="font-medium text-sm text-gray-900 truncate">{{ item.product?.name }}</p>
-
-              <p class="text-gray-500 text-xs">{{ item.quantity }} x {{ formatCurrency(item.unit_price) }}</p>
-
+      <div class="flex-1 overflow-y-auto min-h-0 bg-gray-50/50">
+        
+        <div v-if="existingInvoice?.items?.length" class="p-4 border-b border-gray-100 bg-blue-50">
+          <p class="text-sm font-medium text-blue-700 mb-2">Hóa đơn hiện tại:</p>
+          <div class="space-y-2">
+            <div 
+              v-for="item in existingInvoice.items" 
+              :key="item.id"
+              class="flex items-center space-x-3 p-2 bg-white rounded-lg shadow-sm border border-blue-100"
+            >
+              <img 
+                :src="item.product?.image_url || '/placeholder-product.png'" 
+                class="w-10 h-10 object-cover rounded-lg"
+              />
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-sm text-gray-900 truncate">{{ item.product?.name }}</p>
+                <p class="text-gray-500 text-xs">{{ item.quantity }} x {{ formatCurrency(item.unit_price) }}</p>
+              </div>
+              <p class="text-blue-600 font-semibold text-sm">{{ formatCurrency(item.subtotal || item.quantity * item.unit_price) }}</p>
             </div>
-
-            <p class="text-blue-600 font-semibold text-sm">{{ formatCurrency(item.subtotal || item.quantity * item.unit_price) }}</p>
-
           </div>
-
-
-        </div>
-
-
-        <div class="mt-2 pt-2 border-t border-blue-200 flex justify-between text-sm">
-
-
-          <span class="text-blue-600">Tổng hóa đơn cũ:</span>
-
-          <span class="font-bold text-blue-700">{{ formatCurrency(existingInvoice.total_amount) }}</span>
-
-        </div>
-
-
-      </div>
-
-
-
-
-
-      <!-- Cart Items (New Items) -->
-
-
-      <div class="flex-1 overflow-y-auto p-4 space-y-3">
-
-
-        <div v-if="cart.length === 0 && !existingInvoice" class="text-center text-gray-400 py-12">
-
-
-          <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-
-
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-
-
-          </svg>
-
-
-          <p>Chưa có sản phẩm nào</p>
-
-
-          <p class="text-sm">Chọn món từ menu bên trái</p>
-
-
-        </div>
-
-        
-
-        
-
-        <div v-if="cart.length > 0" class="mb-2">
-
-
-          <p class="text-sm font-medium text-green-700 mb-2">Món mới:</p>
-
-
-        </div>
-
-        
-
-        
-
-        <div 
-
-
-          v-for="(item, index) in cart" 
-
-
-          :key="index"
-
-
-          class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-100"
-
-
-        >
-
-
-          <img 
-
-            :src="item.product.image_url || '/placeholder-product.png'" 
-
-            class="w-14 h-14 object-cover rounded-lg"
-
-
-          />
-
-
-          <div class="flex-1 min-w-0">
-
-
-            <p class="font-medium text-sm text-gray-900 truncate">{{ item.product.name }}</p>
-
-
-            <p class="text-coffee-600 text-sm font-semibold">{{ formatCurrency(item.product.price) }}</p>
-
-
+          <div class="mt-2 pt-2 border-t border-blue-200 flex justify-between text-sm">
+            <span class="text-blue-600">Tổng hóa đơn cũ:</span>
+            <span class="font-bold text-blue-700">{{ formatCurrency(existingInvoice.total_amount) }}</span>
           </div>
-
-
-          <div class="flex items-center space-x-1">
-
-
-            <button 
-
-
-              @click="decreaseQuantity(index)"
-
-
-              class="w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-lg"
-
-
-            >
-
-
-              −
-
-
-            </button>
-
-
-            <span class="w-10 text-center font-bold text-gray-900">{{ item.quantity }}</span>
-
-
-            <button 
-
-
-              @click="increaseQuantity(index)"
-
-
-              class="w-8 h-8 flex items-center justify-center bg-coffee-100 border border-coffee-200 rounded-lg hover:bg-coffee-200 transition-colors text-coffee-700 text-lg"
-
-
-            >
-
-
-              +
-
-
-            </button>
-
-
-            <button 
-
-
-              @click="removeFromCart(index)"
-
-
-              class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-2"
-
-
-            >
-
-
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-
-
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-
-
-              </svg>
-
-
-            </button>
-
-
-          </div>
-
-
         </div>
 
-
-      </div>
-
-      
-
-      
-
-      <!-- Cart Summary -->
-
-
-      <div class="p-4 border-t border-gray-100 bg-gray-50">
-
-
-        <div class="space-y-2 mb-4">
-
-
-          <div class="flex justify-between text-sm">
-
-
-            <span class="text-gray-600">Tạm tính ({{ totalItems }} món):</span>
-
-
-            <span class="font-medium">{{ formatCurrency(subtotal) }}</span>
-
-
-          </div>
-
-
-          <div class="flex justify-between items-center pt-2 border-t border-gray-200">
-
-
-            <span class="text-lg font-semibold text-gray-900">Tổng cộng:</span>
-
-
-            <span class="text-2xl font-bold text-coffee-600">{{ formatCurrency(total) }}</span>
-
-
-          </div>
-
-
-        </div>
-
-        
-
-        
-
-        <!-- Existing Order Buttons -->
-
-
-        <div v-if="existingInvoice" class="space-y-3">
-
-
-          <!-- Add Items Button (only if cart has items) -->
-
-
-          <button 
-
-
-            v-if="cart.length > 0"
-
-
-            @click="addToExistingOrder"
-
-
-            :disabled="isCreating"
-
-
-            class="btn-primary w-full text-lg py-3"
-
-
-          >
-
-
-            <span v-if="isCreating">Đang xử lý...</span>
-
-
-            <span v-else class="flex items-center justify-center">
-
-
-              <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-
-
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-
-
-              </svg>
-
-              Thêm vào hóa đơn ({{ formatCurrency(existingInvoice?.total_amount || 0) }})
-
-            </span>
-
-
-          </button>
-
-          
-
-          
-
-          <!-- Pay Existing Order Button -->
-
-
-          <button 
-
-
-            @click="showPaymentDialog"
-
-
-            :disabled="isProcessing"
-
-
-            class="btn-success w-full text-lg py-3"
-
-
-          >
-
-
-            <span v-if="isProcessing">Đang xử lý...</span>
-
-
-            <span v-else class="flex items-center justify-center">
-
-
-              <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-
-
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z" />
-
-
-              </svg>
-
-
-              Thanh toán hóa đơn ({{ formatCurrency((finalTotal) ) }})
-
-
-            </span>
-
-
-          </button>
-
-
-        </div>
-
-        
-
-        
-
-        <!-- New Order: Payment Button -->
-
-
-        <button 
-
-
-          v-else
-
-
-          @click="showPaymentDialog"
-
-
-          :disabled="cart.length === 0 || isCreating"
-
-
-          class="btn-success w-full text-lg py-3"
-
-
-        >
-
-
-          <span v-if="isCreating">Đang xử lý...</span>
-
-
-          <span v-else class="flex items-center justify-center">
-
-
-            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-
-
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z" />
-
-
+        <div class="p-4 space-y-3">
+          <div v-if="cart.length === 0 && !existingInvoice" class="text-center text-gray-400 py-12">
+            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-
-
+            <p>Chưa có sản phẩm nào</p>
+            <p class="text-sm">Chọn món từ menu bên trái</p>
+          </div>
+          
+          <div v-if="cart.length > 0" class="mb-2">
+            <p class="text-sm font-medium text-green-700 mb-2">Món mới:</p>
+          </div>
+          
+          <div 
+            v-for="(item, index) in cart" 
+            :key="index"
+            class="flex items-center space-x-3 p-3 bg-white rounded-lg border border-green-100 shadow-sm"
+          >
+            <img 
+              :src="item.product.image_url || '/placeholder-product.png'" 
+              class="w-14 h-14 object-cover rounded-lg"
+            />
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-sm text-gray-900 truncate">{{ item.product.name }}</p>
+              <p class="text-coffee-600 text-sm font-semibold">{{ formatCurrency(item.product.price) }}</p>
+            </div>
+            <div class="flex items-center space-x-1">
+              <button 
+                @click="decreaseQuantity(index)"
+                class="w-8 h-8 flex items-center justify-center bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors text-lg"
+              >
+                −
+              </button>
+              <span class="w-10 text-center font-bold text-gray-900">{{ item.quantity }}</span>
+              <button 
+                @click="increaseQuantity(index)"
+                class="w-8 h-8 flex items-center justify-center bg-coffee-50 border border-coffee-200 rounded-lg hover:bg-coffee-100 transition-colors text-coffee-700 text-lg"
+              >
+                +
+              </button>
+              <button 
+                @click="removeFromCart(index)"
+                class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-2"
+              >
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div> <div class="p-4 border-t border-gray-200 bg-white shrink-0 mt-auto z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div class="space-y-2 mb-4">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Tạm tính ({{ totalItems }} món):</span>
+            <span class="font-medium">{{ formatCurrency(subtotal) }}</span>
+          </div>
+          <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+<span class="text-lg font-semibold text-gray-900">Tổng cộng:</span>
+            <span class="text-2xl font-bold text-coffee-600">{{ formatCurrency(total) }}</span>
+          </div>
+        </div>
+        
+        <div v-if="existingInvoice" class="space-y-3">
+          <button 
+            v-if="cart.length > 0"
+            @click="addToExistingOrder"
+            :disabled="isCreating"
+            class="btn-primary w-full text-lg py-3"
+          >
+            <span v-if="isCreating">Đang xử lý...</span>
+            <span v-else class="flex items-center justify-center">
+              <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Thêm vào hóa đơn ({{ formatCurrency(existingInvoice?.total_amount || 0) }})
+            </span>
+          </button>
+          
+          <button 
+            @click="showPaymentDialog"
+            :disabled="isProcessing"
+            class="btn-success w-full text-lg py-3"
+          >
+            <span v-if="isProcessing">Đang xử lý...</span>
+            <span v-else class="flex items-center justify-center">
+              <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z" />
+              </svg>
+              Thanh toán ({{ formatCurrency(finalTotal) }})
+            </span>
+          </button>
+        </div>
+        
+        <button 
+          v-else
+          @click="showPaymentDialog"
+          :disabled="cart.length === 0 || isCreating"
+          class="btn-success w-full text-lg py-3"
+        >
+          <span v-if="isCreating">Đang xử lý...</span>
+          <span v-else class="flex items-center justify-center">
+            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z" />
+            </svg>
             Thanh toán
-
-
           </span>
-
-
         </button>
-
-
       </div>
-
 
     </div>
 
@@ -729,9 +417,7 @@
 
 
           <p class="text-3xl font-bold text-coffee-600" :class="{ 'line-through text-gray-400 text-xl': appliedVoucher }">
-
-
-            {{ formatCurrency(originalTotal) }}
+{{ formatCurrency(originalTotal) }}
 
 
           </p>
@@ -766,7 +452,7 @@
 
               class="flex-1 input text-sm"
 
-              :disabled="isApplyingVoucher || appliedVoucher"
+              :disabled="isApplyingVoucher || !!appliedVoucher"
 
             />
 
@@ -900,9 +586,7 @@
 
 
             </div>
-
-
-            <p class="font-semibold text-gray-900">Tiền mặt</p>
+<p class="font-semibold text-gray-900">Tiền mặt</p>
 
 
             <p class="text-sm text-gray-500">Thanh toán bằng tiền mặt</p>
@@ -1001,6 +685,7 @@ import { useInvoicesStore } from '@/stores/invoices'
 
 import { useAuthStore } from '@/stores/auth'
 
+import { useToast } from '@/composables/useToast'
 
 import { useVouchersStore, type Voucher } from '@/stores/vouchers'
 
@@ -1022,43 +707,24 @@ const route = useRoute()
 const router = useRouter()
 
 const productsStore = useProductsStore()
-
 const tablesStore = useTablesStore()
-
-
 const invoicesStore = useInvoicesStore()
-
-
 const authStore = useAuthStore()
-
-
 const vouchersStore = useVouchersStore()
 
+const { success: toastSuccess, error: showError } = useToast()
 
 
 const tableId = computed(() => Number(route.params.tableId))
 
 
 const tableName = computed(() => {
-
-
   const table = tablesStore.tables.find(t => t.id === tableId.value)
-
-
   return table?.name || tableId.value
-
-
 })
 
-
-
-
-
 const searchQuery = ref('')
-
-
 const selectedCategory = ref<ProductCategory | 'all'>('all')
-
 
 const cart = ref<{ product: Product; quantity: number }[]>([])
 
@@ -1097,9 +763,8 @@ const isApplyingVoucher = ref(false)
 
 
 const voucherError = ref('')
-
-
 const discountAmount = ref(0)
+const orderNote = ref('')
 
 
 
@@ -1381,9 +1046,7 @@ const updateTime = () => {
 
 
 const goBack = async () => {
-
-
-  // If cart has items and no existing invoice, create pending invoice
+// If cart has items and no existing invoice, create pending invoice
 
 
   if (cart.value.length > 0 && !existingInvoice.value && authStore.user) {
@@ -1418,11 +1081,11 @@ const goBack = async () => {
 
       total_amount: finalTotal.value,
 
-      payment_method: null,
+      payment_method: undefined,
 
       status: 'pending',
 
-      paid_at: null
+      paid_at: undefined
 
     }, items)
 
@@ -1616,7 +1279,7 @@ const addToExistingOrder = async () => {
 
     
 
-    alert(`Đã thêm ${totalItems.value} món vào hóa đơn!\nTổng tiền mới: ${formatCurrency(newTotal)}`)
+    toastSuccess('Thành công', `Đã thêm ${totalItems.value} món vào hóa đơn! Tổng tiền mới: ${formatCurrency(newTotal)}`)
 
     
 
@@ -1631,7 +1294,7 @@ const addToExistingOrder = async () => {
 
     console.error('Error adding to order:', err)
 
-    alert('Không thể thêm món vào hóa đơn')
+    showError('Lỗi', 'Không thể thêm món vào hóa đơn')
 
   } finally {
 
@@ -1659,9 +1322,8 @@ const processPayment = async (paymentMethod: 'cash' | 'transfer') => {
 
   if (!authStore.user?.id) {
 
-    alert('Lỗi: Không tìm thấy thông tin nhân viên. Vui lòng đăng nhập lại.')
-
-    return
+    showError('Lỗi', 'Không tìm thấy thông tin nhân viên. Vui lòng đăng nhập lại.')
+return
 
 
   }
@@ -1753,7 +1415,7 @@ const processPayment = async (paymentMethod: 'cash' | 'transfer') => {
 
         console.error('Error adding items before payment:', err)
 
-        alert('Không thể thêm món vào hóa đơn')
+        showError('Lỗi', 'Không thể thêm món vào hóa đơn')
 
         isProcessing.value = false
 
@@ -1808,11 +1470,11 @@ const processPayment = async (paymentMethod: 'cash' | 'transfer') => {
 
       total_amount: finalTotal.value,
 
-      payment_method: null,
+      payment_method: undefined,
 
       status: 'pending',
 
-      paid_at: null
+      paid_at: undefined
 
     }, items)
 
@@ -1822,7 +1484,7 @@ const processPayment = async (paymentMethod: 'cash' | 'transfer') => {
 
     if (!invoice) {
 
-      alert('Lỗi: Không thể tạo hóa đơn')
+      showError('Lỗi', 'Không thể tạo hóa đơn')
 
       isProcessing.value = false
 
@@ -1853,7 +1515,7 @@ const processPayment = async (paymentMethod: 'cash' | 'transfer') => {
 
 if (!invoiceId) {
 
-  alert('Lỗi: Không tìm thấy hóa đơn')
+  showError('Lỗi', 'Không tìm thấy hóa đơn')
 
   isProcessing.value = false
 
@@ -1924,11 +1586,7 @@ if (success) {
 
 
 
-  alert(`Thanh toán thành công!
-
-Phương thức: ${paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}
-
-Tổng tiền: ${formatCurrency(finalAmount)}`)
+  toastSuccess('Thanh toán thành công', `Phương thức: ${paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'} - Số tiền: ${formatCurrency(finalAmount)}`)
 
 
 
@@ -1937,7 +1595,7 @@ Tổng tiền: ${formatCurrency(finalAmount)}`)
 
 } else {
 
-  alert('Lỗi: Không thể thanh toán hóa đơn')
+  showError('Lỗi', 'Không thể thanh toán hóa đơn')
 
   isProcessing.value = false
 
@@ -1946,11 +1604,6 @@ Tổng tiền: ${formatCurrency(finalAmount)}`)
 
 
 }
-
-
-
-
-
 const loadExistingInvoice = async () => {
 
 
@@ -2097,5 +1750,3 @@ onUnmounted(() => {
 
 
 </script>
-
-

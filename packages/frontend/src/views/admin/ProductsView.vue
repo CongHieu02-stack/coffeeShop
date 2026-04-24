@@ -208,15 +208,25 @@
 
                   <button 
 
-                    @click="confirmDelete(product)"
+                    @click="toggleProductAvailability(product)"
 
-                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    :class="product.is_available ? 'text-gray-600 hover:bg-gray-50' : 'text-green-600 hover:bg-green-50'"
+
+                    class="p-2 rounded-lg transition-colors"
+
+                    :title="product.is_available ? 'Vô hiệu hóa' : 'Kích hoạt'"
 
                   >
 
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg v-if="product.is_available" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+
+                    </svg>
+
+                    <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
 
                     </svg>
 
@@ -346,26 +356,6 @@
 
     </ModalDialog>
 
-    
-
-    <!-- Delete Confirmation -->
-
-    <ConfirmDialog
-
-      :is-open="isDeleteDialogOpen"
-
-      title="Xóa sản phẩm"
-
-      :message="`Bạn có chắc muốn xóa sản phẩm '${productToDelete?.name}'?`"
-
-      variant="danger"
-
-      @confirm="deleteProduct"
-
-      @cancel="isDeleteDialogOpen = false"
-
-    />
-
   </div>
 
 </template>
@@ -379,8 +369,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useProductsStore, type Product, type ProductCategory } from '@/stores/products'
 
 import ModalDialog from '@/components/common/ModalDialog.vue'
-
-import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
 
 
@@ -396,11 +384,7 @@ const selectedCategory = ref<ProductCategory | 'all'>('all')
 
 const isModalOpen = ref(false)
 
-const isDeleteDialogOpen = ref(false)
-
 const editingProduct = ref<Product | null>(null)
-
-const productToDelete = ref<Product | null>(null)
 
 
 
@@ -554,28 +538,10 @@ const saveProduct = async () => {
 
 
 
-const confirmDelete = (product: Product) => {
-
-  productToDelete.value = product
-
-  isDeleteDialogOpen.value = true
-
-}
-
-
-
-const deleteProduct = async () => {
-
-  if (productToDelete.value) {
-
-    await productsStore.deleteProduct(productToDelete.value.id)
-
-    isDeleteDialogOpen.value = false
-
-    productToDelete.value = null
-
-  }
-
+const toggleProductAvailability = async (product: Product) => {
+  await productsStore.updateProduct(product.id, {
+    is_available: !product.is_available
+  })
 }
 
 

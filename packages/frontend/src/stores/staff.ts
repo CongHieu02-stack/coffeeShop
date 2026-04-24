@@ -26,11 +26,12 @@ const DEMO_STAFF: StaffMember[] = [
 
 export interface StaffMember {
   id: string
-  email?: string
+  email: string
   full_name: string
   role: 'admin' | 'staff'
   is_active: boolean
   created_at: string
+  created_by?: string
 }
 
 export const useStaffStore = defineStore('staff', () => {
@@ -107,15 +108,22 @@ export const useStaffStore = defineStore('staff', () => {
         return null
       }
 
+      // Get current logged-in user's email for created_by field BEFORE creating new user
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      const createdByEmail = currentUser?.email
+
       if (authData.user) {
+
         // Upsert profile (insert or update)
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .upsert({
             id: authData.user.id,
+            email: email,
             full_name: fullName,
             role: role,
-            is_active: true
+            is_active: true,
+            created_by: createdByEmail
           }, { onConflict: 'id' })
           .select()
           .single()
