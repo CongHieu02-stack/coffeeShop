@@ -332,7 +332,20 @@
             <span class="text-2xl font-bold text-coffee-600">{{ formatCurrency(total) }}</span>
           </div>
         </div>
-        
+
+        <!-- Note Section -->
+        <div class="bg-blue-50 p-4 rounded-lg">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Ghi chú (lượng đường, đá...)
+          </label>
+          <textarea
+            v-model="orderNote"
+            placeholder="Ví dụ: Ít đường, nhiều đá..."
+            class="input w-full"
+            rows="2"
+          ></textarea>
+        </div>
+
         <div v-if="existingInvoice" class="space-y-3">
           <button 
             v-if="cart.length > 0"
@@ -538,19 +551,6 @@
           <p class="text-sm text-emerald-500 mt-1">Tiết kiệm {{ formatCurrency(discountAmount) }}</p>
 
 
-        </div>
-
-        <!-- Note Section -->
-        <div class="bg-blue-50 p-4 rounded-lg">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Ghi chú (lượng đường, đá...)
-          </label>
-          <textarea
-            v-model="orderNote"
-            placeholder="Ví dụ: Ít đường, nhiều đá..."
-            class="input w-full"
-            rows="2"
-          ></textarea>
         </div>
 
         
@@ -1085,8 +1085,8 @@ const goBack = async () => {
 
       status: 'pending',
 
-      paid_at: undefined
-
+      paid_at: undefined,
+      note: orderNote.value
     }, items)
 
     
@@ -1273,8 +1273,8 @@ const addToExistingOrder = async () => {
     await invoicesStore.updateInvoice(existingInvoice.value.id, {
 
 
-      total_amount: newTotal
-
+      total_amount: newTotal,
+      note: orderNote.value
     })
 
     
@@ -1474,8 +1474,8 @@ return
 
       status: 'pending',
 
-      paid_at: undefined
-
+      paid_at: undefined,
+      note: orderNote.value
     }, items)
 
     
@@ -1533,9 +1533,8 @@ if (!invoiceId) {
 
 
 await invoicesStore.updateInvoice(invoiceId, {
-
-  total_amount: finalTotal.value
-
+  total_amount: finalTotal.value,
+  note: orderNote.value
 })
 
 
@@ -1667,6 +1666,10 @@ const loadExistingInvoice = async () => {
       existingInvoice.value = data
 
 
+      // Load note from existing invoice
+      orderNote.value = data.note || ''
+
+
       // Cart stays empty - only for new items
 
 
@@ -1750,3 +1753,8 @@ onUnmounted(() => {
 
 
 </script>
+
+
+
+
+
